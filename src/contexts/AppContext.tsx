@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo } from '
 import { Driver, ProcessedLineup, RaceClass, AppSettings, TrackInfo, ExportSettings, STORAGE_KEYS } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { parseRawData, processLineups as processLineupUtil } from '@/utils/lineupProcessor';
+import { exportLineups as exportLineupsUtil } from '@/utils/exportUtils';
 
 interface AppContextType {
   classes: RaceClass[];
@@ -32,6 +33,7 @@ const defaultSettings: AppSettings = {
     alternateRowColors: true,
     includeHeaders: true,
     fileName: 'race_lineups',
+    exportFormat: 'pdf',
   },
 };
 
@@ -52,30 +54,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const darkMode = settings.darkMode;
 
-  // Load persisted data from localStorage on component mount
   useEffect(() => {
     const loadPersistedData = () => {
       try {
-        // Load track info
         const persistedTrackInfo = localStorage.getItem(STORAGE_KEYS.TRACK_INFO);
         if (persistedTrackInfo) {
           const trackInfo = JSON.parse(persistedTrackInfo);
           setSettings(prev => ({ ...prev, trackInfo }));
         }
 
-        // Load dark mode preference
         const persistedDarkMode = localStorage.getItem(STORAGE_KEYS.DARK_MODE);
         if (persistedDarkMode !== null) {
           setSettings(prev => ({ ...prev, darkMode: persistedDarkMode === 'true' }));
         }
 
-        // Load racing classes
         const persistedClasses = localStorage.getItem(STORAGE_KEYS.CLASSES);
         if (persistedClasses) {
           setClasses(JSON.parse(persistedClasses));
         }
 
-        // Load export settings
         const persistedExportSettings = localStorage.getItem(STORAGE_KEYS.EXPORT_SETTINGS);
         if (persistedExportSettings) {
           setSettings(prev => ({ ...prev, defaultExportSettings: JSON.parse(persistedExportSettings) }));
@@ -88,7 +85,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadPersistedData();
   }, []);
 
-  // Apply dark mode class to document
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -96,15 +92,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       document.documentElement.classList.remove('dark');
     }
     
-    // Persist dark mode preference
     localStorage.setItem(STORAGE_KEYS.DARK_MODE, darkMode.toString());
   }, [darkMode]);
 
-  // Add a new racing class
   const addClass = (newClass: RaceClass) => {
     const updatedClasses = [...classes, { ...newClass, id: newClass.id || Date.now().toString() }];
     setClasses(updatedClasses);
-    // Persist classes
     localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(updatedClasses));
     
     toast({
@@ -113,11 +106,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Update an existing class
   const updateClass = (updatedClass: RaceClass) => {
     const updatedClasses = classes.map(c => c.id === updatedClass.id ? updatedClass : c);
     setClasses(updatedClasses);
-    // Persist classes
     localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(updatedClasses));
     
     toast({
@@ -126,17 +117,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Remove a class
   const removeClass = (classId: string) => {
     const classToRemove = classes.find(c => c.id === classId);
     if (!classToRemove) return;
     
     const updatedClasses = classes.filter(c => c.id !== classId);
     setClasses(updatedClasses);
-    // Persist classes
     localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(updatedClasses));
     
-    // Also remove any lineups associated with this class
     setLineups(prev => prev.filter(lineup => lineup.classId !== classId));
     
     toast({
@@ -145,7 +133,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Process the raw input data into lineups
   const processLineups = (selectedClassId: string) => {
     if (!rawData.trim()) {
       toast({
@@ -166,7 +153,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     
     try {
-      // Parse the raw data to get drivers
       const { drivers, errors } = parseRawData(rawData, classes, selectedClassId);
       
       if (errors.length > 0) {
@@ -188,12 +174,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return;
       }
       
-      // Process the drivers into lineups
       const processedLineups = processLineupUtil(drivers, classes);
       
-      // Update or add the new lineups
       setLineups(prev => {
-        // Keep existing lineups for other classes
         const existingLineups = prev.filter(lineup => 
           !processedLineups.some(pl => pl.classId === lineup.classId)
         );
@@ -217,22 +200,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Update app settings
   const updateSettings = (newSettings: Partial<AppSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
-  // Toggle dark mode
   const toggleDarkMode = () => {
     setSettings(prev => ({ ...prev, darkMode: !prev.darkMode }));
   };
 
-  // Update track info
   const updateTrackInfo = (info: TrackInfo) => {
     const updatedTrackInfo = { ...settings.trackInfo, ...info };
     setSettings(prev => ({ ...prev, trackInfo: updatedTrackInfo }));
     
-    // Persist track info
     localStorage.setItem(STORAGE_KEYS.TRACK_INFO, JSON.stringify(updatedTrackInfo));
     
     toast({
@@ -241,7 +220,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Clear all lineups
   const clearLineups = () => {
     setLineups([]);
     setRawData('');
@@ -251,11 +229,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Export lineups
   const exportLineups = (exportSettings?: ExportSettings) => {
     const currentExportSettings = exportSettings || settings.defaultExportSettings;
     
-    // Persist export settings if they're provided
     if (exportSettings) {
       setSettings(prev => ({ ...prev, defaultExportSettings: exportSettings }));
       localStorage.setItem(STORAGE_KEYS.EXPORT_SETTINGS, JSON.stringify(exportSettings));
@@ -270,20 +246,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
     
-    // In a real app, this would generate and download an Excel file
-    // For now, we'll just show a success toast
-    toast({
-      title: 'Export Started',
-      description: `Exporting ${lineups.length} classes to ${currentExportSettings.fileName}.xlsx`,
-    });
-    
-    // Simulate export success after a delay
-    setTimeout(() => {
+    try {
+      exportLineupsUtil(lineups, currentExportSettings, settings.trackInfo);
+      
       toast({
         title: 'Export Complete',
-        description: 'Your lineups have been exported successfully.',
+        description: `Your lineups have been exported in ${currentExportSettings.exportFormat.toUpperCase()} format.`,
       });
-    }, 1500);
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: 'Export Failed',
+        description: `There was an error exporting your lineups: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive',
+      });
+    }
   };
 
   const value = useMemo(() => ({

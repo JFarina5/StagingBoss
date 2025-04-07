@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Download, Trash } from 'lucide-react';
+import { Download, Trash, FileText } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import ExportOptions from './ExportOptions';
 
 const LineupPreview: React.FC = () => {
-  const { lineups, clearLineups, exportLineups } = useAppContext();
+  const { lineups, clearLineups } = useAppContext();
   const [selectedClassId, setSelectedClassId] = useState<string>(lineups[0]?.classId || '');
 
   const selectedLineup = lineups.find(lineup => lineup.classId === selectedClassId);
@@ -34,7 +35,7 @@ const LineupPreview: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-between">
               <div className="w-full max-w-xs">
                 <Select 
                   value={selectedClassId} 
@@ -79,25 +80,25 @@ const LineupPreview: React.FC = () => {
                   </AlertDialogContent>
                 </AlertDialog>
                 
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  onClick={() => exportLineups()}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export
-                </Button>
+                <ExportOptions 
+                  triggerButton={
+                    <Button variant="default" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Export
+                    </Button>
+                  }
+                />
               </div>
             </div>
             
             {selectedLineup ? (
-              <div className="border rounded-md overflow-hidden">
-                <div className="p-2 bg-muted font-medium">
+              <div className="border rounded-md overflow-hidden print:border-none">
+                <div className="p-2 bg-muted font-medium print:bg-transparent print:text-black print:text-xl print:text-center">
                   {selectedLineup.className} Lineup
                 </div>
-                <Table>
+                <Table className="print:w-full">
                   <TableHeader>
-                    <TableRow>
+                    <TableRow className="print:bg-gray-200">
                       <TableHead className="w-[80px]">Position</TableHead>
                       <TableHead className="w-[100px]">Car #</TableHead>
                       <TableHead>Driver</TableHead>
@@ -106,7 +107,10 @@ const LineupPreview: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {selectedLineup.drivers.map((driver, index) => (
-                      <TableRow key={`${driver.carNumber}-${driver.driverName}`}>
+                      <TableRow 
+                        key={`${driver.carNumber}-${driver.driverName}`}
+                        className={index % 2 === 1 ? 'bg-muted/50 print:bg-gray-100' : ''}
+                      >
                         <TableCell className="font-medium">{index + 1}</TableCell>
                         <TableCell>{driver.carNumber}</TableCell>
                         <TableCell>{driver.driverName}</TableCell>

@@ -36,6 +36,7 @@ export interface ExportSettings {
   alternateRowColors: boolean;
   includeHeaders: boolean;
   fileName: string;
+  exportFormat: 'excel' | 'pdf';
 }
 
 // Local storage keys for data persistence

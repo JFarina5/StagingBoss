@@ -1,5 +1,6 @@
 
 import { ProcessedLineup, ExportSettings, TrackInfo } from '@/types';
+import { exportToPdf } from './pdfExportUtils';
 
 /**
  * Simulate exporting data to Excel
@@ -23,6 +24,21 @@ export const exportToExcel = (
   // 4. Apply styling (alternate row colors, etc.)
   // 5. Include the track logo if specified
   // 6. Trigger file download
+};
+
+/**
+ * Export lineups based on selected format
+ */
+export const exportLineups = (
+  lineups: ProcessedLineup[],
+  settings: ExportSettings,
+  trackInfo: TrackInfo
+): void => {
+  if (settings.exportFormat === 'pdf') {
+    exportToPdf(lineups, settings, trackInfo);
+  } else {
+    exportToExcel(lineups, settings, trackInfo);
+  }
 };
 
 /**

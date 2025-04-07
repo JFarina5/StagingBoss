@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { useAppContext } from '@/contexts/AppContext';
 import { Download } from 'lucide-react';
 import { ExportSettings } from '@/types';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ExportOptionsProps {
   triggerButton?: React.ReactNode;
@@ -27,6 +28,7 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
     alternateRowColors: settings.defaultExportSettings.alternateRowColors,
     includeHeaders: settings.defaultExportSettings.includeHeaders,
     fileName: settings.defaultExportSettings.fileName,
+    exportFormat: settings.defaultExportSettings.exportFormat || 'pdf',
   });
   const [isOpen, setIsOpen] = useState(false);
   
@@ -40,15 +42,32 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
       <DialogTrigger asChild>
         {triggerButton}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Export Race Lineups</DialogTitle>
           <DialogDescription>
-            Configure how your race lineups will be exported to Excel
+            Configure how your race lineups will be exported
           </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4 py-4">
+          <Tabs defaultValue={exportSettings.exportFormat} onValueChange={(value) => setExportSettings({...exportSettings, exportFormat: value as 'excel' | 'pdf'})}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="pdf">PDF Format</TabsTrigger>
+              <TabsTrigger value="excel">Excel Format</TabsTrigger>
+            </TabsList>
+            <TabsContent value="pdf">
+              <p className="text-xs text-muted-foreground mt-2 mb-4">
+                Export a standard 8.5" x 11" document with one lineup per page
+              </p>
+            </TabsContent>
+            <TabsContent value="excel">
+              <p className="text-xs text-muted-foreground mt-2 mb-4">
+                Export to spreadsheet format for further editing
+              </p>
+            </TabsContent>
+          </Tabs>
+
           <div className="space-y-2">
             <Label htmlFor="fileName">File Name</Label>
             <Input
@@ -58,7 +77,7 @@ const ExportOptions: React.FC<ExportOptionsProps> = ({
               placeholder="race_lineups"
             />
             <p className="text-xs text-muted-foreground">
-              The file will be saved as {exportSettings.fileName || 'race_lineups'}.xlsx
+              The file will be saved as {exportSettings.fileName || 'race_lineups'}.{exportSettings.exportFormat === 'pdf' ? 'pdf' : 'xlsx'}
             </p>
           </div>
           
