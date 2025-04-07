@@ -56,21 +56,16 @@ export const exportToPdf = (
     doc.text(lineup.className, 0.5, yPos);
     yPos += 0.3;
     
-    // Format the data for the table
-    const tableData = lineup.drivers.map((driver, idx) => [
-      (idx + 1).toString(),               // Position
-      driver.carNumber,                   // Car #
-      driver.driverName,                  // Driver name
-      driver.pillNumber === Number.MAX_SAFE_INTEGER ? '-' : Math.floor(driver.pillNumber).toString()  // Pill #
-    ]);
+    // Format the data for the inside/outside table
+    const formattedData = formatInsideOutsideData(lineup.drivers);
     
-    // Define table columns
-    const columns = ['Pos', 'Car #', 'Driver', 'Pill #'];
+    // Define table headers
+    const headers = [['Inside', 'Outside']];
     
     // Add the table
     autoTable(doc, {
-      head: settings.includeHeaders ? [columns] : undefined,
-      body: tableData,
+      head: settings.includeHeaders ? headers : undefined,
+      body: formattedData,
       startY: yPos,
       margin: { left: 0.5, right: 0.5 },
       styles: {
@@ -78,18 +73,17 @@ export const exportToPdf = (
         cellPadding: 0.1,
       },
       headStyles: {
-        fillColor: [80, 80, 80],
+        fillColor: [100, 149, 237], // Cornflower blue color similar to image
         textColor: [255, 255, 255],
         fontStyle: 'bold',
+        halign: 'center',
       },
       alternateRowStyles: settings.alternateRowColors ? {
         fillColor: [240, 240, 240]
       } : {},
       columnStyles: {
-        0: { cellWidth: 0.5 },   // Position
-        1: { cellWidth: 0.8 },   // Car #
-        2: { cellWidth: 5.7 },   // Driver name
-        3: { cellWidth: 0.7 },   // Pill #
+        0: { cellWidth: 3.7, halign: 'center' },   // Inside
+        1: { cellWidth: 3.7, halign: 'center' },   // Outside
       },
     });
     
@@ -103,6 +97,52 @@ export const exportToPdf = (
     }
   });
   
+  // Add "produced by StagingBoss" footer
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150); // Light gray color
+  doc.text("Lineups produced by StagingBoss", 4.25, 10.5, { align: 'center' });
+  
   // Save the PDF
   doc.save(`${settings.fileName || 'race_lineups'}.pdf`);
+};
+
+/**
+ * Format driver data in inside/outside format
+ */
+const formatInsideOutsideData = (drivers: Array<any>): Array<Array<string>> => {
+  // Sort drivers by pill number (should already be sorted, but just to be sure)
+  const sortedDrivers = [...drivers].sort((a, b) => {
+    if (a.pillNumber === Number.MAX_SAFE_INTEGER && b.pillNumber === Number.MAX_SAFE_INTEGER) {
+      return 0; // Keep original order for both without pill numbers
+    }
+    if (a.pillNumber === Number.MAX_SAFE_INTEGER) return 1;
+    if (b.pillNumber === Number.MAX_SAFE_INTEGER) return -1;
+    return a.pillNumber - b.pillNumber;
+  });
+  
+  const result: Array<Array<string>> = [];
+  
+  // Split drivers into inside and outside
+  const totalDrivers = sortedDrivers.length;
+  const rows = Math.ceil(totalDrivers / 2);
+  
+  for (let i = 0; i < rows; i++) {
+    const insideIndex = i;
+    const outsideIndex = i + rows;
+    
+    const insideDriver = insideIndex < totalDrivers ? sortedDrivers[insideIndex] : null;
+    const outsideDriver = outsideIndex < totalDrivers ? sortedDrivers[outsideIndex] : null;
+    
+    const insideText = insideDriver 
+      ? `${insideDriver.carNumber} (${insideDriver.driverName.charAt(0)}. ${insideDriver.driverName.split(' ')[1]})`
+      : '';
+    
+    const outsideText = outsideDriver 
+      ? `${outsideDriver.carNumber} (${outsideDriver.driverName.charAt(0)}. ${outsideDriver.driverName.split(' ')[1]})`
+      : '';
+    
+    result.push([insideText, outsideText]);
+  }
+  
+  return result;
 };
