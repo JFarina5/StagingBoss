@@ -5,7 +5,8 @@ import { Driver, ProcessedLineup, RaceClass } from '@/types';
  */
 export const parseRawData = (
   rawData: string, 
-  classes: RaceClass[]
+  classes: RaceClass[],
+  selectedClassId: string
 ): { drivers: Driver[], errors: string[] } => {
   const drivers: Driver[] = [];
   const errors: string[] = [];
@@ -14,39 +15,47 @@ export const parseRawData = (
     return { drivers, errors: ['No data provided'] };
   }
   
+  // Find the selected class
+  const classObj = classes.find(c => c.id === selectedClassId);
+  if (!classObj) {
+    return { drivers, errors: ['Selected class not found'] };
+  }
+  
   const lines = rawData.trim().split('\n');
+  let lineCounter = 0;
   
   for (let i = 0; i < lines.length; i++) {
+    lineCounter++;
     const line = lines[i].trim();
     if (!line) continue;
     
     const parts = line.split('\t');
-    if (parts.length < 4) {
-      errors.push(`Line ${i + 1}: Not enough data (expected 4 fields, got ${parts.length})`);
+    
+    // Handle different column formats
+    if (parts.length < 2) {
+      errors.push(`Line ${lineCounter}: Not enough data (expected at least 2 fields, got ${parts.length})`);
       continue;
     }
     
-    const [carNumber, driverName, pillNumberStr, className] = parts;
+    const carNumber = parts[0].trim();
+    const driverName = parts[1].trim();
     
-    // Find the class
-    const classObj = classes.find(c => c.name === className);
-    if (!classObj) {
-      errors.push(`Line ${i + 1}: Unknown class "${className}"`);
-      continue;
-    }
-    
-    // Parse pill number
-    const pillNumber = parseInt(pillNumberStr, 10);
-    if (isNaN(pillNumber)) {
-      errors.push(`Line ${i + 1}: Invalid pill number "${pillNumberStr}"`);
-      continue;
+    // Extract pill number if provided (3rd column)
+    let pillNumber: number | null = null;
+    if (parts.length >= 3 && parts[2].trim()) {
+      const pillValue = parseInt(parts[2].trim(), 10);
+      if (!isNaN(pillValue)) {
+        pillNumber = pillValue;
+      } else {
+        errors.push(`Line ${lineCounter}: Invalid pill number "${parts[2].trim()}". Using order received.`);
+      }
     }
     
     drivers.push({
       carNumber,
       driverName,
-      pillNumber,
-      className,
+      pillNumber: pillNumber !== null ? pillNumber : Number.MAX_SAFE_INTEGER,
+      className: classObj.name,
       classId: classObj.id,
     });
   }
@@ -75,13 +84,35 @@ export const processLineups = (
   return Object.keys(groupedByClass).map(classId => {
     const classObj = classes.find(c => c.id === classId);
     
-    // Handle duplicate pill numbers by resolving conflicts
-    const driversWithUniqueNumbers = resolveDuplicatePillNumbers(groupedByClass[classId]);
+    // Sort based on pill number first (putting those without pill numbers at the end)
+    // For those without pill numbers, preserve the original order
+    const driversWithSortedPills = [...groupedByClass[classId]];
+    
+    // Keep track of original order for drivers without pill numbers
+    const withoutPills: Driver[] = [];
+    const withPills: Driver[] = [];
+    
+    driversWithSortedPills.forEach(driver => {
+      if (driver.pillNumber === Number.MAX_SAFE_INTEGER) {
+        withoutPills.push(driver);
+      } else {
+        withPills.push(driver);
+      }
+    });
+    
+    // Sort drivers with pill numbers by their pill number
+    withPills.sort((a, b) => a.pillNumber - b.pillNumber);
+    
+    // Combine the two arrays - drivers with pill numbers first, followed by those without
+    const sortedDrivers = [...withPills, ...withoutPills];
+    
+    // Handle duplicate pill numbers by assigning a small decimal adjustment
+    const resolved = resolveDuplicatePillNumbers(sortedDrivers);
     
     return {
       classId,
       className: classObj?.name || 'Unknown Class',
-      drivers: driversWithUniqueNumbers.sort((a, b) => a.pillNumber - b.pillNumber),
+      drivers: resolved,
     };
   });
 };
@@ -144,7 +175,7 @@ export const generateSampleData = (classes: RaceClass[]): string => {
       const carNum = `${10 + i * (index + 1)}`;
       const driverName = `Driver ${index + 1}-${i}`;
       const pillNum = (index * 10) + i;
-      sample += `${carNum}\t${driverName}\t${pillNum}\t${cls.name}\n`;
+      sample += `${carNum}\t${driverName}\t${pillNum}\n`;
     }
   });
   

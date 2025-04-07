@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { Driver, ProcessedLineup, RaceClass, AppSettings, TrackInfo, ExportSettings, STORAGE_KEYS } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
+import { parseRawData, processLineups as processLineupUtil } from '@/utils/lineupProcessor';
 
 interface AppContextType {
   classes: RaceClass[];
@@ -14,7 +14,7 @@ interface AppContextType {
   updateClass: (updatedClass: RaceClass) => void;
   removeClass: (classId: string) => void;
   setRawData: (data: string) => void;
-  processLineups: () => void;
+  processLineups: (selectedClassId: string) => void;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   toggleDarkMode: () => void;
   updateTrackInfo: (info: TrackInfo) => void;
@@ -146,7 +146,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Process the raw input data into lineups
-  const processLineups = () => {
+  const processLineups = (selectedClassId: string) => {
     if (!rawData.trim()) {
       toast({
         title: 'No Data',
@@ -155,74 +155,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       return;
     }
-
+    
+    if (!selectedClassId) {
+      toast({
+        title: 'No Class Selected',
+        description: 'Please select a racing class for this lineup.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     try {
-      // Split by lines and parse
-      const lines = rawData.trim().split('\n');
-      const drivers: Driver[] = [];
-      let classObj = classes[0]; // Default to first class if no dropdown selection
+      // Parse the raw data to get drivers
+      const { drivers, errors } = parseRawData(rawData, classes, selectedClassId);
       
-      for (const line of lines) {
-        // Split by tabs or any whitespace as fallback
-        const parts = line.split(/\t|  +/);
-        
-        if (parts.length < 2) {
+      if (errors.length > 0) {
+        errors.forEach(error => {
           toast({
-            title: 'Invalid Line Format',
-            description: `Line "${line}" does not have enough data.`,
-            variant: 'destructive',
+            title: 'Warning',
+            description: error,
+            variant: 'default',
           });
-          continue;
-        }
-        
-        const carNumber = parts[0].trim();
-        const driverName = parts.length >= 3 ? 
-          `${parts[2].trim()} ${parts[1].trim()}` : // First name in part[2], Last name in part[1]
-          parts[1].trim(); // Just use what's available
-        
-        // Generate a random pill number if not provided
-        const pillNumber = Math.floor(Math.random() * 100) + 1;
-        
-        if (!classObj) {
-          toast({
-            title: 'No Class Selected',
-            description: `Please select a class for the lineup.`,
-            variant: 'destructive',
-          });
-          return;
-        }
-        
-        drivers.push({
-          carNumber,
-          driverName,
-          pillNumber,
-          className: classObj.name,
-          classId: classObj.id,
         });
       }
       
-      // Create a single processed lineup for the selected class
-      const processedLineup: ProcessedLineup = {
-        classId: classObj.id,
-        className: classObj.name,
-        drivers: drivers.sort((a, b) => a.pillNumber - b.pillNumber),
-      };
+      if (drivers.length === 0) {
+        toast({
+          title: 'No Valid Drivers',
+          description: 'No valid driver data was found in the input.',
+          variant: 'destructive',
+        });
+        return;
+      }
       
-      // Replace any existing lineup for this class
+      // Process the drivers into lineups
+      const processedLineups = processLineupUtil(drivers, classes);
+      
+      // Update or add the new lineups
       setLineups(prev => {
-        const filteredLineups = prev.filter(lineup => lineup.classId !== classObj.id);
-        return [...filteredLineups, processedLineup];
+        // Keep existing lineups for other classes
+        const existingLineups = prev.filter(lineup => 
+          !processedLineups.some(pl => pl.classId === lineup.classId)
+        );
+        
+        return [...existingLineups, ...processedLineups];
       });
       
+      const classObj = classes.find(c => c.id === selectedClassId);
       toast({
         title: 'Lineup Processed',
-        description: `Successfully processed lineup for ${classObj.name} with ${drivers.length} drivers.`,
+        description: `Successfully processed lineup for ${classObj?.name || 'Unknown Class'} with ${drivers.length} drivers.`,
       });
+      
     } catch (error) {
       console.error('Error processing lineups:', error);
       toast({
         title: 'Processing Error',
-        description: 'An error occurred while processing the lineup data.',
+        description: `An error occurred while processing the lineup data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive',
       });
     }

@@ -32,7 +32,7 @@ const RaceLineupInput: React.FC = () => {
       return;
     }
     
-    processLineups();
+    processLineups(selectedClassId);
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -46,7 +46,7 @@ const RaceLineupInput: React.FC = () => {
       <CardHeader>
         <CardTitle>Enter Race Lineup Data</CardTitle>
         <CardDescription>
-          Input or paste car numbers and driver names
+          Input or paste car numbers and driver names with pill numbers
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -58,7 +58,7 @@ const RaceLineupInput: React.FC = () => {
         <div className="space-y-2">
           <div className="flex justify-between items-center mb-1">
             <div className="text-sm font-medium">
-              Data Format: Car# [tab] Last Name [tab] First Name
+              Data Format: Car# [tab] Driver Name [tab] Pill#
             </div>
             <Button 
               variant="outline" 
@@ -72,9 +72,9 @@ const RaceLineupInput: React.FC = () => {
           <div className="p-2 bg-muted rounded-md mb-2 text-xs text-muted-foreground">
             <div>Example:</div>
             <pre className="whitespace-pre">
-              7{'\t'}Johnson{'\t'}Jeff{'\n'}
-              42{'\t'}Petty{'\t'}Richard{'\n'}
-              3{'\t'}Earnhardt{'\t'}Dale
+              7{'\t'}Jeff Johnson{'\t'}42{'\n'}
+              42{'\t'}Richard Petty{'\t'}13{'\n'}
+              3{'\t'}Dale Earnhardt{'\t'}99
             </pre>
           </div>
           

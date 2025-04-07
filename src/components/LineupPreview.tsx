@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Driver } from '@/types';
 import { Download, Trash } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
@@ -14,6 +13,11 @@ const LineupPreview: React.FC = () => {
   const [selectedClassId, setSelectedClassId] = useState<string>(lineups[0]?.classId || '');
 
   const selectedLineup = lineups.find(lineup => lineup.classId === selectedClassId);
+
+  // Format pill number for display, removing decimal part for duplicates
+  const formatPillNumber = (pill: number) => {
+    return pill === Number.MAX_SAFE_INTEGER ? '-' : Math.floor(pill).toString();
+  };
 
   return (
     <Card className="border shadow-sm">
@@ -106,7 +110,7 @@ const LineupPreview: React.FC = () => {
                         <TableCell className="font-medium">{index + 1}</TableCell>
                         <TableCell>{driver.carNumber}</TableCell>
                         <TableCell>{driver.driverName}</TableCell>
-                        <TableCell>{driver.pillNumber}</TableCell>
+                        <TableCell>{formatPillNumber(driver.pillNumber)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
