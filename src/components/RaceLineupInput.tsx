@@ -1,79 +1,99 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAppContext } from '@/contexts/AppContext';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckIcon, ImportIcon } from 'lucide-react';
+import { Play } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import ClassSelector from './ClassSelector';
 
 const RaceLineupInput: React.FC = () => {
-  const { rawData, setRawData, processLineups, classes } = useAppContext();
+  const { classes, rawData, setRawData, processLineups } = useAppContext();
+  const { toast } = useToast();
+  const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '');
 
   const handleProcess = () => {
+    if (!selectedClassId) {
+      toast({
+        title: 'No Class Selected',
+        description: 'Please select a racing class before processing.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    if (!rawData.trim()) {
+      toast({
+        title: 'No Data',
+        description: 'Please enter lineup data first.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
     processLineups();
   };
 
-  const handleSampleData = () => {
-    if (classes.length === 0) return;
-    
-    // Create sample data based on available classes
-    let sample = '';
-    classes.forEach((cls, index) => {
-      // Add 3 sample drivers for each class
-      for (let i = 1; i <= 3; i++) {
-        const carNum = `${10 + i * (index + 1)}`;
-        const driverName = `Driver ${index + 1}-${i}`;
-        const pillNum = (index * 10) + i;
-        sample += `${carNum}\t${driverName}\t${pillNum}\t${cls.name}\n`;
-      }
-    });
-    
-    setRawData(sample.trim());
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text');
+    setRawData(pasteData);
   };
 
   return (
     <Card className="border shadow-sm">
       <CardHeader>
-        <CardTitle>Race Lineup Input</CardTitle>
+        <CardTitle>Enter Race Lineup Data</CardTitle>
         <CardDescription>
-          Enter your race lineup data in tab-separated format: 
-          Car#, Driver Name, Pill#, Class Name
+          Input or paste car numbers and driver names
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Alert className="mb-4 bg-muted">
-          <AlertDescription>
-            Each line should contain tab-separated values in this format:
-            <code className="block bg-background p-2 rounded mt-1 font-mono text-xs">
-              22\tJohn Doe\t15\tSuper Late Models
-            </code>
-          </AlertDescription>
-        </Alert>
-        
-        <Textarea 
-          value={rawData}
-          onChange={(e) => setRawData(e.target.value)}
-          placeholder="Enter lineup data here..."
-          className="min-h-[200px] font-mono"
+      <CardContent className="space-y-4">
+        <ClassSelector 
+          selectedClassId={selectedClassId} 
+          onClassChange={setSelectedClassId} 
         />
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-1">
+            <div className="text-sm font-medium">
+              Data Format: Car# [tab] Last Name [tab] First Name
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setRawData('')}
+            >
+              Clear
+            </Button>
+          </div>
+          
+          <div className="p-2 bg-muted rounded-md mb-2 text-xs text-muted-foreground">
+            <div>Example:</div>
+            <pre className="whitespace-pre">
+              7{'\t'}Johnson{'\t'}Jeff{'\n'}
+              42{'\t'}Petty{'\t'}Richard{'\n'}
+              3{'\t'}Earnhardt{'\t'}Dale
+            </pre>
+          </div>
+          
+          <Textarea
+            placeholder="Paste or enter your race lineup data here..."
+            value={rawData}
+            onChange={(e) => setRawData(e.target.value)}
+            onPaste={handlePaste}
+            className="min-h-[300px] font-mono text-sm"
+          />
+        </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={handleSampleData}
-          disabled={classes.length === 0}
-        >
-          <ImportIcon className="mr-2 h-4 w-4" />
-          Load Sample Data
-        </Button>
+      <CardFooter>
         <Button 
           onClick={handleProcess}
-          disabled={!rawData.trim()}
-          className="bg-racing-blue hover:bg-racing-blue/90"
+          className="w-full"
+          disabled={!rawData.trim() || !selectedClassId}
         >
-          <CheckIcon className="mr-2 h-4 w-4" />
-          Process Lineup
+          <Play className="mr-2 h-4 w-4" /> Process Lineup
         </Button>
       </CardFooter>
     </Card>

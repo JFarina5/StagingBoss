@@ -37,3 +37,11 @@ export interface ExportSettings {
   includeHeaders: boolean;
   fileName: string;
 }
+
+// Local storage keys for data persistence
+export const STORAGE_KEYS = {
+  TRACK_INFO: 'stagingboss_track_info',
+  CLASSES: 'stagingboss_classes',
+  DARK_MODE: 'stagingboss_dark_mode',
+  EXPORT_SETTINGS: 'stagingboss_export_settings'
+};

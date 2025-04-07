@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import { Driver, ProcessedLineup, RaceClass, AppSettings, TrackInfo, ExportSettings } from '@/types';
+import { Driver, ProcessedLineup, RaceClass, AppSettings, TrackInfo, ExportSettings, STORAGE_KEYS } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AppContextType {
@@ -52,18 +52,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const darkMode = settings.darkMode;
 
+  // Load persisted data from localStorage on component mount
   useEffect(() => {
-    // Apply dark mode class to document
+    const loadPersistedData = () => {
+      try {
+        // Load track info
+        const persistedTrackInfo = localStorage.getItem(STORAGE_KEYS.TRACK_INFO);
+        if (persistedTrackInfo) {
+          const trackInfo = JSON.parse(persistedTrackInfo);
+          setSettings(prev => ({ ...prev, trackInfo }));
+        }
+
+        // Load dark mode preference
+        const persistedDarkMode = localStorage.getItem(STORAGE_KEYS.DARK_MODE);
+        if (persistedDarkMode !== null) {
+          setSettings(prev => ({ ...prev, darkMode: persistedDarkMode === 'true' }));
+        }
+
+        // Load racing classes
+        const persistedClasses = localStorage.getItem(STORAGE_KEYS.CLASSES);
+        if (persistedClasses) {
+          setClasses(JSON.parse(persistedClasses));
+        }
+
+        // Load export settings
+        const persistedExportSettings = localStorage.getItem(STORAGE_KEYS.EXPORT_SETTINGS);
+        if (persistedExportSettings) {
+          setSettings(prev => ({ ...prev, defaultExportSettings: JSON.parse(persistedExportSettings) }));
+        }
+      } catch (error) {
+        console.error('Error loading persisted data:', error);
+      }
+    };
+
+    loadPersistedData();
+  }, []);
+
+  // Apply dark mode class to document
+  useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    
+    // Persist dark mode preference
+    localStorage.setItem(STORAGE_KEYS.DARK_MODE, darkMode.toString());
   }, [darkMode]);
 
   // Add a new racing class
   const addClass = (newClass: RaceClass) => {
-    setClasses(prev => [...prev, { ...newClass, id: newClass.id || Date.now().toString() }]);
+    const updatedClasses = [...classes, { ...newClass, id: newClass.id || Date.now().toString() }];
+    setClasses(updatedClasses);
+    // Persist classes
+    localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(updatedClasses));
+    
     toast({
       title: 'Class Added',
       description: `${newClass.name} has been added to your classes.`,
@@ -72,7 +115,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Update an existing class
   const updateClass = (updatedClass: RaceClass) => {
-    setClasses(prev => prev.map(c => c.id === updatedClass.id ? updatedClass : c));
+    const updatedClasses = classes.map(c => c.id === updatedClass.id ? updatedClass : c);
+    setClasses(updatedClasses);
+    // Persist classes
+    localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(updatedClasses));
+    
     toast({
       title: 'Class Updated',
       description: `${updatedClass.name} has been updated.`,
@@ -84,7 +131,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const classToRemove = classes.find(c => c.id === classId);
     if (!classToRemove) return;
     
-    setClasses(prev => prev.filter(c => c.id !== classId));
+    const updatedClasses = classes.filter(c => c.id !== classId);
+    setClasses(updatedClasses);
+    // Persist classes
+    localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(updatedClasses));
+    
     // Also remove any lineups associated with this class
     setLineups(prev => prev.filter(lineup => lineup.classId !== classId));
     
@@ -109,65 +160,63 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Split by lines and parse
       const lines = rawData.trim().split('\n');
       const drivers: Driver[] = [];
+      let classObj = classes[0]; // Default to first class if no dropdown selection
       
       for (const line of lines) {
-        const [carNumber, driverName, pillNumberStr, className] = line.split('\t');
+        // Split by tabs or any whitespace as fallback
+        const parts = line.split(/\t|  +/);
         
-        // Find the class ID
-        const classObj = classes.find(c => c.name === className);
-        if (!classObj) {
+        if (parts.length < 2) {
           toast({
-            title: 'Unknown Class',
-            description: `Class "${className}" not found. Please add it first.`,
+            title: 'Invalid Line Format',
+            description: `Line "${line}" does not have enough data.`,
             variant: 'destructive',
           });
           continue;
         }
         
-        const pillNumber = parseInt(pillNumberStr, 10);
-        if (isNaN(pillNumber)) {
+        const carNumber = parts[0].trim();
+        const driverName = parts.length >= 3 ? 
+          `${parts[2].trim()} ${parts[1].trim()}` : // First name in part[2], Last name in part[1]
+          parts[1].trim(); // Just use what's available
+        
+        // Generate a random pill number if not provided
+        const pillNumber = Math.floor(Math.random() * 100) + 1;
+        
+        if (!classObj) {
           toast({
-            title: 'Invalid Pill Number',
-            description: `Pill number for ${driverName} is not a valid number.`,
+            title: 'No Class Selected',
+            description: `Please select a class for the lineup.`,
             variant: 'destructive',
           });
-          continue;
+          return;
         }
         
         drivers.push({
           carNumber,
           driverName,
           pillNumber,
-          className,
+          className: classObj.name,
           classId: classObj.id,
         });
       }
       
-      // Group by class
-      const groupedByClass: Record<string, Driver[]> = {};
+      // Create a single processed lineup for the selected class
+      const processedLineup: ProcessedLineup = {
+        classId: classObj.id,
+        className: classObj.name,
+        drivers: drivers.sort((a, b) => a.pillNumber - b.pillNumber),
+      };
       
-      drivers.forEach(driver => {
-        if (!groupedByClass[driver.classId]) {
-          groupedByClass[driver.classId] = [];
-        }
-        groupedByClass[driver.classId].push(driver);
+      // Replace any existing lineup for this class
+      setLineups(prev => {
+        const filteredLineups = prev.filter(lineup => lineup.classId !== classObj.id);
+        return [...filteredLineups, processedLineup];
       });
-      
-      // Sort each class by pill number and create processed lineups
-      const processedLineups: ProcessedLineup[] = Object.keys(groupedByClass).map(classId => {
-        const classObj = classes.find(c => c.id === classId);
-        return {
-          classId,
-          className: classObj?.name || 'Unknown Class',
-          drivers: groupedByClass[classId].sort((a, b) => a.pillNumber - b.pillNumber),
-        };
-      });
-      
-      setLineups(processedLineups);
       
       toast({
-        title: 'Lineups Processed',
-        description: `Successfully processed lineups for ${processedLineups.length} classes.`,
+        title: 'Lineup Processed',
+        description: `Successfully processed lineup for ${classObj.name} with ${drivers.length} drivers.`,
       });
     } catch (error) {
       console.error('Error processing lineups:', error);
@@ -191,7 +240,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Update track info
   const updateTrackInfo = (info: TrackInfo) => {
-    setSettings(prev => ({ ...prev, trackInfo: { ...prev.trackInfo, ...info } }));
+    const updatedTrackInfo = { ...settings.trackInfo, ...info };
+    setSettings(prev => ({ ...prev, trackInfo: updatedTrackInfo }));
+    
+    // Persist track info
+    localStorage.setItem(STORAGE_KEYS.TRACK_INFO, JSON.stringify(updatedTrackInfo));
+    
     toast({
       title: 'Track Info Updated',
       description: `Track information has been updated.`,
@@ -210,7 +264,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Export lineups
   const exportLineups = (exportSettings?: ExportSettings) => {
-    const settings = exportSettings || defaultSettings.defaultExportSettings;
+    const currentExportSettings = exportSettings || settings.defaultExportSettings;
+    
+    // Persist export settings if they're provided
+    if (exportSettings) {
+      setSettings(prev => ({ ...prev, defaultExportSettings: exportSettings }));
+      localStorage.setItem(STORAGE_KEYS.EXPORT_SETTINGS, JSON.stringify(exportSettings));
+    }
     
     if (lineups.length === 0) {
       toast({
@@ -225,7 +285,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // For now, we'll just show a success toast
     toast({
       title: 'Export Started',
-      description: `Exporting ${lineups.length} classes to ${settings.fileName}.xlsx`,
+      description: `Exporting ${lineups.length} classes to ${currentExportSettings.fileName}.xlsx`,
     });
     
     // Simulate export success after a delay
