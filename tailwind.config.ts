@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -24,6 +25,14 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				racing: {
+					red: '#E30613',
+					blue: '#005BBB',
+					yellow: '#FFD700',
+					black: '#121212',
+					gray: '#232323',
+					silver: '#C0C0C0',
+				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
@@ -84,11 +93,33 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-highlight': {
+					'0%, 100%': {
+						backgroundColor: 'rgba(255, 215, 0, 0)'
+					},
+					'50%': {
+						backgroundColor: 'rgba(255, 215, 0, 0.2)'
+					}
+				},
+				'checkered-slide': {
+					'0%': {
+						backgroundPosition: '0 0'
+					},
+					'100%': {
+						backgroundPosition: '20px 20px'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-highlight': 'pulse-highlight 2s ease-in-out infinite',
+				'checkered-slide': 'checkered-slide 1s linear infinite'
+			},
+			backgroundImage: {
+				'checkered-pattern': 'repeating-conic-gradient(#888 0% 25%, #fff 0% 50%)',
+				'checkered-pattern-dark': 'repeating-conic-gradient(#333 0% 25%, #666 0% 50%)'
 			}
 		}
 	},
