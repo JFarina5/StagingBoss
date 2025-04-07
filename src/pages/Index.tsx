@@ -7,10 +7,6 @@ import LineupPreview from '@/components/LineupPreview';
 import SettingsPanel from '@/components/SettingsPanel';
 import { AppProvider } from '@/contexts/AppContext';
 import ExportOptions from '@/components/ExportOptions';
-import { motion, AnimatePresence } from 'framer-motion';
-
-// Add framer-motion as a dependency
-<lov-add-dependency>framer-motion@latest</lov-add-dependency>
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('input');
@@ -30,24 +26,6 @@ const Index = () => {
     
     if (prevIndex === -1 || currentIndex === -1) return 1;
     return prevIndex < currentIndex ? 1 : -1;
-  };
-
-  // Animation variants
-  const pageVariants = {
-    initial: (direction: number) => ({
-      x: direction * 20,
-      opacity: 0,
-    }),
-    animate: {
-      x: 0,
-      opacity: 1,
-      transition: { duration: 0.3 }
-    },
-    exit: (direction: number) => ({
-      x: direction * -20,
-      opacity: 0,
-      transition: { duration: 0.2 }
-    })
   };
 
   return (
@@ -81,22 +59,16 @@ const Index = () => {
           </div>
           
           <div className="pb-10 relative overflow-hidden">
-            <AnimatePresence mode="wait" initial={false} custom={getAnimationDirection()}>
-              <motion.div
-                key={activeTab}
-                custom={getAnimationDirection()}
-                variants={pageVariants}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                className="w-full"
-              >
-                {activeTab === 'input' && <RaceLineupInput />}
-                {activeTab === 'classes' && <ClassManager />}
-                {activeTab === 'lineup' && <LineupPreview />}
-                {activeTab === 'settings' && <SettingsPanel />}
-              </motion.div>
-            </AnimatePresence>
+            <div key={activeTab} className="w-full transition-all duration-300 ease-in-out" 
+              style={{ 
+                opacity: 1,
+                transform: `translateX(0px)`
+              }}>
+              {activeTab === 'input' && <RaceLineupInput />}
+              {activeTab === 'classes' && <ClassManager />}
+              {activeTab === 'lineup' && <LineupPreview />}
+              {activeTab === 'settings' && <SettingsPanel />}
+            </div>
           </div>
         </main>
         
