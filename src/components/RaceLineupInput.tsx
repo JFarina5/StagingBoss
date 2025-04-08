@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +31,13 @@ const RaceLineupInput: React.FC = () => {
       return;
     }
     
-    processLineups(selectedClassId);
+    // Process the lineup and get the next class ID
+    const nextClassId = processLineups(selectedClassId);
+    
+    // If we have a next class ID, automatically select it
+    if (nextClassId) {
+      setSelectedClassId(nextClassId);
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -83,7 +88,7 @@ const RaceLineupInput: React.FC = () => {
             value={rawData}
             onChange={(e) => setRawData(e.target.value)}
             onPaste={handlePaste}
-            className="min-h-[300px] font-mono text-sm"
+            className="min-h-[500px] font-mono text-sm" // Increased height to accommodate more racers
           />
         </div>
       </CardContent>

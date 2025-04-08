@@ -15,7 +15,7 @@ interface AppContextType {
   updateClass: (updatedClass: RaceClass) => void;
   removeClass: (classId: string) => void;
   setRawData: (data: string) => void;
-  processLineups: (selectedClassId: string) => void;
+  processLineups: (selectedClassId: string) => string | null;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   toggleDarkMode: () => void;
   updateTrackInfo: (info: TrackInfo) => void;
@@ -133,14 +133,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const processLineups = (selectedClassId: string) => {
+  const getNextClass = (currentClassId: string): RaceClass | undefined => {
+    const currentIndex = classes.findIndex(c => c.id === currentClassId);
+    if (currentIndex === -1) return undefined;
+    
+    // Get next index, wrapping around to the beginning if needed
+    const nextIndex = (currentIndex + 1) % classes.length;
+    return classes[nextIndex];
+  };
+
+  const processLineups = (selectedClassId: string): string | null => {
     if (!rawData.trim()) {
       toast({
         title: 'No Data',
         description: 'Please enter lineup data first.',
         variant: 'destructive',
       });
-      return;
+      return null;
     }
     
     if (!selectedClassId) {
@@ -149,7 +158,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: 'Please select a racing class for this lineup.',
         variant: 'destructive',
       });
-      return;
+      return null;
     }
     
     try {
@@ -171,7 +180,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           description: 'No valid driver data was found in the input.',
           variant: 'destructive',
         });
-        return;
+        return null;
       }
       
       const processedLineups = processLineupUtil(drivers, classes);
@@ -189,6 +198,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         title: 'Lineup Processed',
         description: `Successfully processed lineup for ${classObj?.name || 'Unknown Class'} with ${drivers.length} drivers.`,
       });
+
+      // Auto-advance to the next class
+      const nextClass = getNextClass(selectedClassId);
+      if (nextClass) {
+        // Clear the input field if the next class doesn't already have data
+        const hasLineupData = lineups.some(lineup => lineup.classId === nextClass.id);
+        if (!hasLineupData) {
+          setRawData('');
+        }
+        
+        // Return the next class ID for the UI to update selectors
+        return nextClass.id;
+      }
       
     } catch (error) {
       console.error('Error processing lineups:', error);
@@ -198,6 +220,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         variant: 'destructive',
       });
     }
+    
+    return null; // No next class to advance to
   };
 
   const updateSettings = (newSettings: Partial<AppSettings>) => {

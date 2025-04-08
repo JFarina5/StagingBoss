@@ -1,15 +1,23 @@
-
 import { ProcessedLineup, ExportSettings, TrackInfo } from '@/types';
 import { exportToPdf } from './pdfExportUtils';
 
 /**
  * Format driver data in inside/outside format for Excel
+ * Enhanced with improved sorting similar to test.py
  */
 const formatInsideOutsideDataForExcel = (drivers: Array<any>): Array<Record<string, string>> => {
-  // Sort drivers by pill number (should already be sorted, but just to be sure)
+  // Sort drivers by pill number (should already be sorted, but this ensures consistent behavior)
   const sortedDrivers = [...drivers].sort((a, b) => {
     if (a.pillNumber === Number.MAX_SAFE_INTEGER && b.pillNumber === Number.MAX_SAFE_INTEGER) {
-      return 0; // Keep original order for both without pill numbers
+      // If both don't have pill numbers, sort by car number
+      const aNum = parseInt(a.carNumber.replace(/\D/g, ''), 10);
+      const bNum = parseInt(b.carNumber.replace(/\D/g, ''), 10);
+      
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return aNum - bNum;
+      }
+      
+      return a.carNumber.localeCompare(b.carNumber);
     }
     if (a.pillNumber === Number.MAX_SAFE_INTEGER) return 1;
     if (b.pillNumber === Number.MAX_SAFE_INTEGER) return -1;
@@ -29,12 +37,28 @@ const formatInsideOutsideDataForExcel = (drivers: Array<any>): Array<Record<stri
     const insideDriver = insideIndex < totalDrivers ? sortedDrivers[insideIndex] : null;
     const outsideDriver = outsideIndex < totalDrivers ? sortedDrivers[outsideIndex] : null;
     
+    // Format driver names with first initial + last name similar to test.py
+    const formatDriverName = (driver: any): string => {
+      if (!driver) return '';
+      
+      const nameParts = driver.driverName.split(' ');
+      
+      if (nameParts.length === 1) {
+        return driver.driverName; // Just use the single name part
+      } else {
+        // Get first initial + last name (handle multiple word last names)
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ');
+        return `${firstName.charAt(0)}. ${lastName}`;
+      }
+    };
+    
     const insideText = insideDriver 
-      ? `${insideDriver.carNumber} (${insideDriver.driverName.charAt(0)}. ${insideDriver.driverName.split(' ')[1]})`
+      ? `${insideDriver.carNumber} (${formatDriverName(insideDriver)})`
       : '';
     
     const outsideText = outsideDriver 
-      ? `${outsideDriver.carNumber} (${outsideDriver.driverName.charAt(0)}. ${outsideDriver.driverName.split(' ')[1]})`
+      ? `${outsideDriver.carNumber} (${formatDriverName(outsideDriver)})`
       : '';
     
     result.push({
@@ -101,7 +125,7 @@ export const formatLineupForExport = (
     Position: index + 1,
     'Car #': driver.carNumber,
     Driver: driver.driverName,
-    'Pill #': driver.pillNumber,
+    'Pill #': driver.pillNumber === Number.MAX_SAFE_INTEGER ? '-' : Math.floor(driver.pillNumber),
   }));
 };
 
