@@ -37,6 +37,7 @@ export interface ExportSettings {
   includeHeaders: boolean;
   fileName: string;
   exportFormat: 'excel' | 'pdf';
+  // Note: PDF exports now use portrait mode by default
 }
 
 // Local storage keys for data persistence

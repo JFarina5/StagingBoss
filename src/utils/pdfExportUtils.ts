@@ -1,9 +1,8 @@
-
 import { ProcessedLineup, ExportSettings, TrackInfo } from '@/types';
 
 /**
  * Export lineups to PDF with improved formatting and dynamic sizing
- * With enhanced single-page focus to ensure all content fits
+ * Modified to use portrait mode and fit all lineups on a single page
  */
 export const exportToPdf = (
   lineups: ProcessedLineup[],
@@ -20,12 +19,12 @@ export const exportToPdf = (
   const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const filename = `${trackInfo.name.replace(/[^a-z0-9]/gi, '_')}_${formattedDate}.pdf`;
   
-  // Create print-friendly content with compact layout
+  // Create print-friendly content with ultra-compact layout for portrait mode
   printDiv.innerHTML = `
-    <div style="padding: 10px; font-family: Arial, sans-serif;">
+    <div style="padding: 5px; font-family: Arial, sans-serif;">
       ${settings.includeTrackLogo && trackInfo.logoUrl ? `
-        <div style="text-align: center; margin-bottom: 5px;">
-          <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 60px; max-width: 120px;">
+        <div style="text-align: center; margin-bottom: 3px;">
+          <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 40px; max-width: 80px;">
         </div>
       ` : ''}
       ${generateLineupTables(lineups, settings)}
@@ -35,12 +34,12 @@ export const exportToPdf = (
     </div>
   `;
   
-  // Apply print styles, including styles to hide browser headers and footers
+  // Apply print styles, including styles for portrait orientation
   const style = document.createElement('style');
   style.innerHTML = `
     @media print {
       @page { 
-        size: landscape;
+        size: portrait;
         margin: 0mm; /* Remove default margins to hide headers/footers */
       }
       html, body { 
@@ -49,51 +48,50 @@ export const exportToPdf = (
         height: 100%;
       }
       
-      /* Content container with padding */
+      /* Content container with minimal padding */
       .print-container {
-        padding: 5mm; /* Reduced padding to maximize content space */
+        padding: 3mm; /* Minimal padding to maximize content space */
         box-sizing: border-box;
         position: relative;
         min-height: 100%;
-        padding-bottom: 10mm; /* Reduced space for footer */
+        padding-bottom: 5mm; /* Reduced space for footer */
       }
       
       /* Logo container */
       .logo-container {
         text-align: center;
-        margin-bottom: 5px; /* Reduced margin */
+        margin-bottom: 2px; /* Minimal margin */
       }
       
       /* Logo image styling */
       .track-logo {
-        max-width: 120px; /* Reduced size */
-        max-height: 60px; /* Reduced size */
+        max-width: 80px; /* Reduced size */
+        max-height: 40px; /* Reduced size */
         object-fit: contain;
       }
       
       /* Fixed footer - positioned at bottom of page */
       .footer {
         position: fixed;
-        bottom: 2mm; /* Reduced margin */
+        bottom: 1mm; /* Minimal margin */
         left: 0;
         right: 0;
         text-align: center;
-        font-size: 6px; /* Smaller font size */
+        font-size: 5px; /* Smaller font size */
         color: #999;
       }
       
       /* Avoid page breaks inside class containers */
       .class-header { break-after: avoid; }
       .lineup-table { break-inside: avoid; }
-      .page-break { page-break-after: always; }
       
-      /* Grid layout for classes - 2 per row like in test.py */
+      /* Grid layout for classes - 3 per row for portrait layout */
       .classes-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Two columns */
-        grid-gap: 5px; /* Reduced gap */
+        grid-template-columns: 1fr 1fr 1fr; /* Three columns for portrait */
+        grid-gap: 3px; /* Minimal gap */
         width: 100%;
-        margin-bottom: 10px; /* Reduced margin */
+        margin-bottom: 5px; /* Minimal margin */
       }
       
       .class-container {
@@ -102,43 +100,44 @@ export const exportToPdf = (
       
       /* Smaller table headers */
       th {
-        font-size: 8px !important; /* Further reduced */
-        padding: 2px !important;
+        font-size: 6px !important; /* Further reduced for portrait */
+        padding: 1px !important;
       }
       
-      /* Dynamic text sizing classes - gradually reduce */
-      .font-size-1 { font-size: 12px; }
-      .font-size-2 { font-size: 10px; }
-      .font-size-3 { font-size: 9px; }
-      .font-size-4 { font-size: 8px; }
-      .font-size-5 { font-size: 7px; }
-      .font-size-6 { font-size: 6px; }
-      .font-size-7 { font-size: 5px; }
+      /* Dynamic text sizing classes - more aggressive reduction */
+      .font-size-1 { font-size: 8px; }
+      .font-size-2 { font-size: 7px; }
+      .font-size-3 { font-size: 6px; }
+      .font-size-4 { font-size: 5px; }
+      .font-size-5 { font-size: 4px; }
+      .font-size-6 { font-size: 3.5px; }
+      .font-size-7 { font-size: 3px; }
       
-      /* Compact table cells when space is limited */
-      .padding-normal td, .padding-normal th { padding: 3px !important; }
-      .padding-compact td, .padding-compact th { padding: 2px !important; }
-      .padding-very-compact td, .padding-very-compact th { padding: 1px !important; }
+      /* Ultra-compact table cells */
+      .padding-normal td, .padding-normal th { padding: 2px !important; }
+      .padding-compact td, .padding-compact th { padding: 1px !important; }
+      .padding-very-compact td, .padding-very-compact th { padding: 0.5px !important; }
       .padding-ultra-compact td, .padding-ultra-compact th { padding: 0px !important; }
 
-      /* Dynamic title sizing classes */
-      .title-size-1 { font-size: 18px; } /* Reduced sizes */
-      .title-size-2 { font-size: 16px; }
-      .title-size-3 { font-size: 14px; }
-      .title-size-4 { font-size: 12px; }
+      /* Dynamic title sizing classes - smaller for portrait */
+      .title-size-1 { font-size: 12px; }
+      .title-size-2 { font-size: 10px; }
+      .title-size-3 { font-size: 8px; }
+      .title-size-4 { font-size: 7px; }
       
       /* Compact class headers */
       .class-header-container {
         background-color: #4285F4;
         color: white;
-        padding: 3px 8px !important; /* Reduced padding */
-        margin-bottom: 5px; /* Reduced margin */
+        padding: 1px 3px !important; /* Minimal padding */
+        margin-bottom: 2px; /* Minimal margin */
       }
       
       /* Class name heading */
       .class-name-heading {
         margin: 0;
-        font-size: 14px; /* Smaller font size */
+        font-size: 9px; /* Smaller font size */
+        font-weight: bold;
       }
     }
   `;
@@ -157,7 +156,7 @@ export const exportToPdf = (
     // Copy our print content to the iframe
     iframeDoc.body.innerHTML = `<div class="print-container">${printDiv.innerHTML}</div>`;
     
-    // Apply adaptive sizing logic
+    // Apply adaptive sizing logic with an increased focus on portrait mode
     setTimeout(() => {
       fitContentToPage(iframeDoc);
       
@@ -167,6 +166,7 @@ export const exportToPdf = (
         console.info('For best results with no headers/footers:');
         console.info('- In the print dialog, disable "Headers and Footers"');
         console.info('- Set margins to "None" or "Minimum"');
+        console.info('- Ensure "Portrait" orientation is selected');
         
         iframe.contentWindow?.print();
         
@@ -184,65 +184,106 @@ export const exportToPdf = (
 };
 
 /**
- * Dynamically adjust content to fit on a single page
- * More aggressive adaptation than previous version
+ * Dynamically adjust content to fit on a single page in portrait mode
+ * More aggressive adaptation for portrait layout
  */
 function fitContentToPage(doc: Document): void {
   const container = doc.querySelector('.print-container');
   const tables = doc.querySelectorAll('.lineup-table');
-  const title = doc.querySelector('h1');
-
-  if (!container || tables.length === 0 || !title) return;
-
-  const pageHeight = 792; // 11 inches in points (8.5" x 11" at 72 DPI)
-  const availableHeight = pageHeight - 50; // Account for margins
-
+  const classNames = doc.querySelectorAll('.class-name-heading');
+  
+  if (!container || tables.length === 0) return;
+  
+  // We're now using a portrait page which is approximately 8.5" x 11" (612pt x 792pt)
+  const pageHeight = 792; // 11 inches in points
+  const availableHeight = pageHeight - 30; // Account for minimal margins
+  
   const fontSizes = ['font-size-1', 'font-size-2', 'font-size-3', 'font-size-4', 'font-size-5', 'font-size-6', 'font-size-7'];
   const paddingSizes = ['padding-normal', 'padding-compact', 'padding-very-compact', 'padding-ultra-compact'];
   const titleSizes = ['title-size-1', 'title-size-2', 'title-size-3', 'title-size-4'];
-
+  
   let currentFontSizeIndex = 0;
   let currentPaddingSizeIndex = 0;
   let currentTitleSizeIndex = 0;
-
+  
+  // Start with larger sizes and adjust downward until content fits
   applyStyles(tables, fontSizes[currentFontSizeIndex], paddingSizes[currentPaddingSizeIndex]);
-  applyTitleStyle(title, titleSizes[currentTitleSizeIndex]);
-
+  applyTitleStyle(classNames, titleSizes[currentTitleSizeIndex]);
+  
   let contentFits = container.scrollHeight <= availableHeight;
-
-  while (!contentFits && (currentFontSizeIndex < fontSizes.length - 1 || currentPaddingSizeIndex < paddingSizes.length - 1 || currentTitleSizeIndex < titleSizes.length - 1)) {
+  let iterations = 0;
+  const maxIterations = 20; // Set a maximum to prevent infinite loops
+  
+  // Keep reducing sizes until content fits or we reach our limits
+  while (!contentFits && iterations < maxIterations) {
+    iterations++;
+    
+    // Adjust font size first (most impactful)
     if (currentFontSizeIndex < fontSizes.length - 1) {
       currentFontSizeIndex++;
-    } else if (currentPaddingSizeIndex < paddingSizes.length - 1) {
-      currentPaddingSizeIndex++;
-    } else if (currentTitleSizeIndex < titleSizes.length - 1) {
-      currentTitleSizeIndex++;
+      applyStyles(tables, fontSizes[currentFontSizeIndex], paddingSizes[currentPaddingSizeIndex]);
     }
-
-    applyStyles(tables, fontSizes[currentFontSizeIndex], paddingSizes[currentPaddingSizeIndex]);
-    applyTitleStyle(title, titleSizes[currentTitleSizeIndex]);
-
+    // Then adjust padding
+    else if (currentPaddingSizeIndex < paddingSizes.length - 1) {
+      currentPaddingSizeIndex++;
+      applyStyles(tables, fontSizes[currentFontSizeIndex], paddingSizes[currentPaddingSizeIndex]);
+    }
+    // Finally adjust title size
+    else if (currentTitleSizeIndex < titleSizes.length - 1) {
+      currentTitleSizeIndex++;
+      applyTitleStyle(classNames, titleSizes[currentTitleSizeIndex]);
+    }
+    else {
+      // We've reached the smallest possible sizes and still don't fit
+      // We could potentially add more extreme size options, or alert the user
+      console.warn("Content may not fit on a single page even at smallest font sizes");
+      break;
+    }
+    
     contentFits = container.scrollHeight <= availableHeight;
   }
-
-  function applyStyles(tableElements: NodeListOf<Element>, fontSizeClass: string, paddingSizeClass: string) {
-    tableElements.forEach(table => {
-      fontSizes.forEach(size => table.classList.remove(size));
-      paddingSizes.forEach(padding => table.classList.remove(padding));
-      table.classList.add(fontSizeClass);
-      table.classList.add(paddingSizeClass);
-    });
-  }
-
-  function applyTitleStyle(titleElement: Element, titleSizeClass: string) {
-    titleSizes.forEach(size => titleElement.classList.remove(size));
-    titleElement.classList.add(titleSizeClass);
-  }
+  
+  console.log(`Content fitted after ${iterations} iterations. Font size index: ${currentFontSizeIndex}, Padding index: ${currentPaddingSizeIndex}, Title index: ${currentTitleSizeIndex}`);
 }
 
 /**
- * Generate HTML tables for each class lineup with two classes per row
- * Similar to the layout in test.py
+ * Apply font and padding styles to tables
+ */
+function applyStyles(tableElements: NodeListOf<Element>, fontSizeClass: string, paddingSizeClass: string) {
+  tableElements.forEach(table => {
+    // Remove all font size classes
+    ['font-size-1', 'font-size-2', 'font-size-3', 'font-size-4', 'font-size-5', 'font-size-6', 'font-size-7'].forEach(size => {
+      table.classList.remove(size);
+    });
+    
+    // Remove all padding classes
+    ['padding-normal', 'padding-compact', 'padding-very-compact', 'padding-ultra-compact'].forEach(padding => {
+      table.classList.remove(padding);
+    });
+    
+    // Apply the new classes
+    table.classList.add(fontSizeClass);
+    table.classList.add(paddingSizeClass);
+  });
+}
+
+/**
+ * Apply title style to class headings
+ */
+function applyTitleStyle(titleElements: NodeListOf<Element>, titleSizeClass: string) {
+  titleElements.forEach(title => {
+    // Remove all title size classes
+    ['title-size-1', 'title-size-2', 'title-size-3', 'title-size-4'].forEach(size => {
+      title.classList.remove(size);
+    });
+    
+    // Apply the new class
+    title.classList.add(titleSizeClass);
+  });
+}
+
+/**
+ * Generate HTML tables for each class lineup with three classes per row for portrait mode
  */
 const generateLineupTables = (
   lineups: ProcessedLineup[],
@@ -250,8 +291,8 @@ const generateLineupTables = (
 ): string => {
   let html = '';
   
-  // Group classes into rows of 2, similar to test.py
-  for (let i = 0; i < lineups.length; i += 2) {
+  // Group classes into rows of 3 for portrait layout
+  for (let i = 0; i < lineups.length; i += 3) {
     // Start a new grid container for each row of classes
     html += '<div class="classes-grid">';
     
@@ -263,20 +304,20 @@ const generateLineupTables = (
       html += generateClassTable(lineups[i + 1], settings);
     }
     
+    // Add the third class if it exists
+    if (i + 2 < lineups.length) {
+      html += generateClassTable(lineups[i + 2], settings);
+    }
+    
     // Close the grid container
     html += '</div>';
-    
-    // Add a page break after every 2 rows (4 classes) except for the last row
-    if (i + 2 < lineups.length && (i + 2) % 4 === 0) {
-      html += '<div class="page-break"></div>';
-    }
   }
   
   return html;
 };
 
 /**
- * Generate HTML table for a single class
+ * Generate HTML table for a single class with simplified format for portrait mode
  */
 const generateClassTable = (
   lineup: ProcessedLineup,
@@ -287,8 +328,8 @@ const generateClassTable = (
   return `
     <div class="class-container">
       <div class="class-header">
-        <div style="background-color: #4285F4; color: white; padding: 8px 15px; margin-bottom: 10px;">
-          <h2 style="margin: 0;">${lineup.className}</h2>
+        <div style="background-color: #4285F4; color: white; padding: 1px 3px; margin-bottom: 2px;">
+          <h2 class="class-name-heading">${lineup.className}</h2>
         </div>
         <table class="lineup-table" style="width: 100%; border-collapse: collapse;">
           ${settings.includeHeaders ? `
@@ -313,8 +354,8 @@ const generateClassTable = (
 };
 
 /**
- * Format driver data in inside/outside format with enhanced driver name formatting
- * Similar to approach used in test.py
+ * Format driver data in inside/outside format
+ * Further simplified for more compact display in portrait mode
  */
 const formatInsideOutsideData = (drivers: Array<any>): Array<Array<string>> => {
   // Sort drivers by pill number (should already be sorted, but this ensures consistent behavior)
@@ -348,48 +389,22 @@ const formatInsideOutsideData = (drivers: Array<any>): Array<Array<string>> => {
     const insideDriver = insideIndex < totalDrivers ? sortedDrivers[insideIndex] : null;
     const outsideDriver = outsideIndex < totalDrivers ? sortedDrivers[outsideIndex] : null;
     
-    // Enhanced driver name formatting similar to test.py
-    const formatDriverName = (driver: any): string => {
+    // Ultra-compact driver name formatting for portrait mode - just car numbers
+    const formatDriverInfo = (driver: any): string => {
       if (!driver) return '';
       
+      // For ultra-compact view, just show car number and last name
       const nameParts = driver.driverName.split(' ');
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : driver.driverName;
       
-      if (nameParts.length === 1) {
-        return driver.driverName; // Just use the single name part
-      } else {
-        // Get last name only
-        const lastName = nameParts.slice(1).join(' ');
-        return `${lastName}`;
-      }
+      return `${driver.carNumber} (${lastName})`;
     };
     
-    const insideText = insideDriver 
-      ? `${insideDriver.carNumber} (${formatDriverName(insideDriver)})`
-      : '';
-    
-    const outsideText = outsideDriver 
-      ? `${outsideDriver.carNumber} (${formatDriverName(outsideDriver)})`
-      : '';
+    const insideText = insideDriver ? formatDriverInfo(insideDriver) : '';
+    const outsideText = outsideDriver ? formatDriverInfo(outsideDriver) : '';
     
     result.push([insideText, outsideText]);
   }
   
   return result;
-};
-
-/**
- * Generate HTML for the logo with proper scaling
- */
-const generateLogoHtml = (logoUrl: string): string => {
-  // Calculate responsive dimensions similar to test.py logo handling
-  return `
-    <div class="logo-container">
-      <img 
-        src="${logoUrl}" 
-        alt="Track Logo" 
-        class="track-logo"
-        onload="this.style.maxHeight = Math.min(80, this.naturalHeight) + 'px';"
-      >
-    </div>
-  `;
 };
