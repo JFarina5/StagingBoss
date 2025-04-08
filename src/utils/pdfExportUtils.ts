@@ -2,7 +2,7 @@ import { ProcessedLineup, ExportSettings, TrackInfo } from '@/types';
 
 /**
  * Export lineups to PDF with improved formatting and dynamic sizing
- * Modified to use portrait mode and fit all lineups on a single page
+ * Modified to use portrait mode and vertical layout without wasted space
  */
 export const exportToPdf = (
   lineups: ProcessedLineup[],
@@ -19,7 +19,7 @@ export const exportToPdf = (
   const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const filename = `${trackInfo.name.replace(/[^a-z0-9]/gi, '_')}_${formattedDate}.pdf`;
   
-  // Create print-friendly content with compact layout for portrait mode
+  // Create print-friendly content with optimized vertical layout for portrait mode
   printDiv.innerHTML = `
     <div style="padding: 5px; font-family: Arial, sans-serif;">
       ${settings.includeTrackLogo && trackInfo.logoUrl ? `
@@ -85,33 +85,34 @@ export const exportToPdf = (
       .class-header { break-after: avoid; }
       .lineup-table { break-inside: avoid; }
       
-      /* Grid layout for classes - 2 per row for portrait layout */
-      .classes-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* Two columns for portrait */
-        grid-gap: 5px;
+      /* Vertical layout for classes - each class appears in sequential order */
+      .classes-container {
+        display: flex;
+        flex-wrap: wrap;
         width: 100%;
-        margin-bottom: 8px;
+        gap: 5px;
       }
       
       .class-container {
+        width: calc(50% - 5px);
         break-inside: avoid;
+        margin-bottom: 5px;
       }
       
       /* Table headers */
       th {
-        font-size: 8px !important;
+        font-size: 9px !important;
         padding: 2px !important;
       }
       
       /* Dynamic text sizing classes */
-      .font-size-1 { font-size: 10px; }
-      .font-size-2 { font-size: 9px; }
-      .font-size-3 { font-size: 8px; }
-      .font-size-4 { font-size: 7px; }
-      .font-size-5 { font-size: 6px; }
-      .font-size-6 { font-size: 5px; }
-      .font-size-7 { font-size: 4px; }
+      .font-size-1 { font-size: 12px; }
+      .font-size-2 { font-size: 11px; }
+      .font-size-3 { font-size: 10px; }
+      .font-size-4 { font-size: 9px; }
+      .font-size-5 { font-size: 8px; }
+      .font-size-6 { font-size: 7px; }
+      .font-size-7 { font-size: 6px; }
       
       /* Table cell padding options */
       .padding-normal td, .padding-normal th { padding: 3px !important; }
@@ -121,9 +122,9 @@ export const exportToPdf = (
 
       /* Dynamic title sizing classes */
       .title-size-1 { font-size: 14px; }
-      .title-size-2 { font-size: 12px; }
-      .title-size-3 { font-size: 10px; }
-      .title-size-4 { font-size: 9px; }
+      .title-size-2 { font-size: 13px; }
+      .title-size-3 { font-size: 12px; }
+      .title-size-4 { font-size: 11px; }
       
       /* Class headers */
       .class-header-container {
@@ -136,7 +137,7 @@ export const exportToPdf = (
       /* Class name heading */
       .class-name-heading {
         margin: 0;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: bold;
       }
     }
@@ -283,36 +284,25 @@ function applyTitleStyle(titleElements: NodeListOf<Element>, titleSizeClass: str
 }
 
 /**
- * Generate HTML tables for each class lineup with two classes per row for portrait mode
+ * Generate HTML tables for each class lineup with vertical layout
  */
 const generateLineupTables = (
   lineups: ProcessedLineup[],
   settings: ExportSettings
 ): string => {
-  let html = '';
+  let html = '<div class="classes-container">';
   
-  // Group classes into rows of 2 for portrait layout
-  for (let i = 0; i < lineups.length; i += 2) {
-    // Start a new grid container for each row of classes
-    html += '<div class="classes-grid">';
-    
-    // Add the first class in this row
-    html += generateClassTable(lineups[i], settings);
-    
-    // Add the second class if it exists
-    if (i + 1 < lineups.length) {
-      html += generateClassTable(lineups[i + 1], settings);
-    }
-    
-    // Close the grid container
-    html += '</div>';
-  }
+  // Each class is its own container, with two classes per row
+  lineups.forEach((lineup) => {
+    html += generateClassTable(lineup, settings);
+  });
   
+  html += '</div>';
   return html;
 };
 
 /**
- * Generate HTML table for a single class with readable format for portrait mode
+ * Generate HTML table for a single class with readable format
  */
 const generateClassTable = (
   lineup: ProcessedLineup,
