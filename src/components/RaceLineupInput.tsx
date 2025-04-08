@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,9 +9,10 @@ import { useToast } from '@/components/ui/use-toast';
 import ClassSelector from './ClassSelector';
 
 const RaceLineupInput: React.FC = () => {
-  const { classes, rawData, setRawData, processLineups } = useAppContext();
+  const { classes, rawData, setRawData, processLineups, settings } = useAppContext();
   const { toast } = useToast();
   const [selectedClassId, setSelectedClassId] = useState(classes[0]?.id || '');
+  const { trackInfo } = settings;
 
   const handleProcess = () => {
     if (!selectedClassId) {
@@ -48,7 +50,16 @@ const RaceLineupInput: React.FC = () => {
 
   return (
     <Card className="border shadow-sm">
-      <CardHeader>
+      <CardHeader className="relative pb-2">
+        {trackInfo.logoUrl && (
+          <div className="absolute right-6 top-6">
+            <img 
+              src={trackInfo.logoUrl}
+              alt={`${trackInfo.name} Logo`}
+              className="h-12 object-contain"
+            />
+          </div>
+        )}
         <CardTitle>Enter Race Lineup Data</CardTitle>
         <CardDescription>
           Input or paste car numbers and driver names with pill numbers
