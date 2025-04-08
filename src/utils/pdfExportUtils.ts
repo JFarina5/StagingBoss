@@ -1,3 +1,4 @@
+
 import { ProcessedLineup, ExportSettings, TrackInfo } from '@/types';
 
 /**
@@ -19,10 +20,14 @@ export const exportToPdf = (
   const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const filename = `${trackInfo.name.replace(/[^a-z0-9]/gi, '_')}_${formattedDate}.pdf`;
   
-  // Create print-friendly content
+  // Create print-friendly content with compact layout
   printDiv.innerHTML = `
-    <div style="padding: 20px; font-family: Arial, sans-serif;">
-      ${trackInfo.logoUrl ? generateLogoHtml(trackInfo.logoUrl) : ''}
+    <div style="padding: 10px; font-family: Arial, sans-serif;">
+      ${settings.includeTrackLogo && trackInfo.logoUrl ? `
+        <div style="text-align: center; margin-bottom: 5px;">
+          <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 60px; max-width: 120px;">
+        </div>
+      ` : ''}
       ${generateLineupTables(lineups, settings)}
       <div class="footer">
         Lineups produced by StagingBoss
