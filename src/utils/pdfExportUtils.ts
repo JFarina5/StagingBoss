@@ -19,12 +19,12 @@ export const exportToPdf = (
   const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const filename = `${trackInfo.name.replace(/[^a-z0-9]/gi, '_')}_${formattedDate}.pdf`;
   
-  // Create print-friendly content with ultra-compact layout for portrait mode
+  // Create print-friendly content with compact layout for portrait mode
   printDiv.innerHTML = `
     <div style="padding: 5px; font-family: Arial, sans-serif;">
       ${settings.includeTrackLogo && trackInfo.logoUrl ? `
-        <div style="text-align: center; margin-bottom: 3px;">
-          <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 40px; max-width: 80px;">
+        <div style="text-align: center; margin-bottom: 5px;">
+          <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 50px; max-width: 100px;">
         </div>
       ` : ''}
       ${generateLineupTables(lineups, settings)}
@@ -50,34 +50,34 @@ export const exportToPdf = (
       
       /* Content container with minimal padding */
       .print-container {
-        padding: 3mm; /* Minimal padding to maximize content space */
+        padding: 5mm; /* Slightly more padding for better readability */
         box-sizing: border-box;
         position: relative;
         min-height: 100%;
-        padding-bottom: 5mm; /* Reduced space for footer */
+        padding-bottom: 7mm; /* Space for footer */
       }
       
       /* Logo container */
       .logo-container {
         text-align: center;
-        margin-bottom: 2px; /* Minimal margin */
+        margin-bottom: 5px;
       }
       
       /* Logo image styling */
       .track-logo {
-        max-width: 80px; /* Reduced size */
-        max-height: 40px; /* Reduced size */
+        max-width: 100px;
+        max-height: 50px;
         object-fit: contain;
       }
       
       /* Fixed footer - positioned at bottom of page */
       .footer {
         position: fixed;
-        bottom: 1mm; /* Minimal margin */
+        bottom: 2mm;
         left: 0;
         right: 0;
         text-align: center;
-        font-size: 5px; /* Smaller font size */
+        font-size: 7px;
         color: #999;
       }
       
@@ -85,58 +85,58 @@ export const exportToPdf = (
       .class-header { break-after: avoid; }
       .lineup-table { break-inside: avoid; }
       
-      /* Grid layout for classes - 3 per row for portrait layout */
+      /* Grid layout for classes - 2 per row for portrait layout */
       .classes-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr; /* Three columns for portrait */
-        grid-gap: 3px; /* Minimal gap */
+        grid-template-columns: 1fr 1fr; /* Two columns for portrait */
+        grid-gap: 5px;
         width: 100%;
-        margin-bottom: 5px; /* Minimal margin */
+        margin-bottom: 8px;
       }
       
       .class-container {
         break-inside: avoid;
       }
       
-      /* Smaller table headers */
+      /* Table headers */
       th {
-        font-size: 6px !important; /* Further reduced for portrait */
-        padding: 1px !important;
+        font-size: 8px !important;
+        padding: 2px !important;
       }
       
-      /* Dynamic text sizing classes - more aggressive reduction */
-      .font-size-1 { font-size: 8px; }
-      .font-size-2 { font-size: 7px; }
-      .font-size-3 { font-size: 6px; }
-      .font-size-4 { font-size: 5px; }
-      .font-size-5 { font-size: 4px; }
-      .font-size-6 { font-size: 3.5px; }
-      .font-size-7 { font-size: 3px; }
+      /* Dynamic text sizing classes */
+      .font-size-1 { font-size: 10px; }
+      .font-size-2 { font-size: 9px; }
+      .font-size-3 { font-size: 8px; }
+      .font-size-4 { font-size: 7px; }
+      .font-size-5 { font-size: 6px; }
+      .font-size-6 { font-size: 5px; }
+      .font-size-7 { font-size: 4px; }
       
-      /* Ultra-compact table cells */
-      .padding-normal td, .padding-normal th { padding: 2px !important; }
-      .padding-compact td, .padding-compact th { padding: 1px !important; }
-      .padding-very-compact td, .padding-very-compact th { padding: 0.5px !important; }
-      .padding-ultra-compact td, .padding-ultra-compact th { padding: 0px !important; }
+      /* Table cell padding options */
+      .padding-normal td, .padding-normal th { padding: 3px !important; }
+      .padding-compact td, .padding-compact th { padding: 2px !important; }
+      .padding-very-compact td, .padding-very-compact th { padding: 1px !important; }
+      .padding-ultra-compact td, .padding-ultra-compact th { padding: 0.5px !important; }
 
-      /* Dynamic title sizing classes - smaller for portrait */
-      .title-size-1 { font-size: 12px; }
-      .title-size-2 { font-size: 10px; }
-      .title-size-3 { font-size: 8px; }
-      .title-size-4 { font-size: 7px; }
+      /* Dynamic title sizing classes */
+      .title-size-1 { font-size: 14px; }
+      .title-size-2 { font-size: 12px; }
+      .title-size-3 { font-size: 10px; }
+      .title-size-4 { font-size: 9px; }
       
-      /* Compact class headers */
+      /* Class headers */
       .class-header-container {
         background-color: #4285F4;
         color: white;
-        padding: 1px 3px !important; /* Minimal padding */
-        margin-bottom: 2px; /* Minimal margin */
+        padding: 2px 4px !important;
+        margin-bottom: 3px;
       }
       
       /* Class name heading */
       .class-name-heading {
         margin: 0;
-        font-size: 9px; /* Smaller font size */
+        font-size: 11px;
         font-weight: bold;
       }
     }
@@ -196,7 +196,7 @@ function fitContentToPage(doc: Document): void {
   
   // We're now using a portrait page which is approximately 8.5" x 11" (612pt x 792pt)
   const pageHeight = 792; // 11 inches in points
-  const availableHeight = pageHeight - 30; // Account for minimal margins
+  const availableHeight = pageHeight - 40; // Account for minimal margins
   
   const fontSizes = ['font-size-1', 'font-size-2', 'font-size-3', 'font-size-4', 'font-size-5', 'font-size-6', 'font-size-7'];
   const paddingSizes = ['padding-normal', 'padding-compact', 'padding-very-compact', 'padding-ultra-compact'];
@@ -283,7 +283,7 @@ function applyTitleStyle(titleElements: NodeListOf<Element>, titleSizeClass: str
 }
 
 /**
- * Generate HTML tables for each class lineup with three classes per row for portrait mode
+ * Generate HTML tables for each class lineup with two classes per row for portrait mode
  */
 const generateLineupTables = (
   lineups: ProcessedLineup[],
@@ -291,8 +291,8 @@ const generateLineupTables = (
 ): string => {
   let html = '';
   
-  // Group classes into rows of 3 for portrait layout
-  for (let i = 0; i < lineups.length; i += 3) {
+  // Group classes into rows of 2 for portrait layout
+  for (let i = 0; i < lineups.length; i += 2) {
     // Start a new grid container for each row of classes
     html += '<div class="classes-grid">';
     
@@ -304,11 +304,6 @@ const generateLineupTables = (
       html += generateClassTable(lineups[i + 1], settings);
     }
     
-    // Add the third class if it exists
-    if (i + 2 < lineups.length) {
-      html += generateClassTable(lineups[i + 2], settings);
-    }
-    
     // Close the grid container
     html += '</div>';
   }
@@ -317,7 +312,7 @@ const generateLineupTables = (
 };
 
 /**
- * Generate HTML table for a single class with simplified format for portrait mode
+ * Generate HTML table for a single class with readable format for portrait mode
  */
 const generateClassTable = (
   lineup: ProcessedLineup,
@@ -328,7 +323,7 @@ const generateClassTable = (
   return `
     <div class="class-container">
       <div class="class-header">
-        <div style="background-color: #4285F4; color: white; padding: 1px 3px; margin-bottom: 2px;">
+        <div style="background-color: #4285F4; color: white; padding: 2px 4px; margin-bottom: 3px;">
           <h2 class="class-name-heading">${lineup.className}</h2>
         </div>
         <table class="lineup-table" style="width: 100%; border-collapse: collapse;">
@@ -355,7 +350,7 @@ const generateClassTable = (
 
 /**
  * Format driver data in inside/outside format
- * Further simplified for more compact display in portrait mode
+ * Modified for better readability with two classes per row
  */
 const formatInsideOutsideData = (drivers: Array<any>): Array<Array<string>> => {
   // Sort drivers by pill number (should already be sorted, but this ensures consistent behavior)
@@ -389,11 +384,11 @@ const formatInsideOutsideData = (drivers: Array<any>): Array<Array<string>> => {
     const insideDriver = insideIndex < totalDrivers ? sortedDrivers[insideIndex] : null;
     const outsideDriver = outsideIndex < totalDrivers ? sortedDrivers[outsideIndex] : null;
     
-    // Ultra-compact driver name formatting for portrait mode - just car numbers
+    // Format driver info more legibly for two-column layout
     const formatDriverInfo = (driver: any): string => {
       if (!driver) return '';
       
-      // For ultra-compact view, just show car number and last name
+      // For better readability with two columns, show car number and last name
       const nameParts = driver.driverName.split(' ');
       const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : driver.driverName;
       
