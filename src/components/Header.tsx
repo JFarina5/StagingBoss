@@ -18,7 +18,7 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
         <div className="flex items-center space-x-2">
           <div className="flex items-center justify-center">
             <img 
-              src="/stagingboss.png" 
+              src="./stagingboss.png" 
               alt="StagingBoss Logo" 
               className="w-10 h-10 rounded-full object-cover"
             />
