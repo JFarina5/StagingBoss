@@ -21,7 +21,7 @@ export const exportToPdf = (
   
   // Create print-friendly content with optimized vertical layout for portrait mode
   printDiv.innerHTML = `
-    <div style="padding: 5px; font-family: Arial, sans-serif;">
+    <div style="padding: 5px; font-family: Arial, sans-serif; ${settings.customFontSize ? `font-size: ${settings.customFontSize}px;` : ''}">
       ${settings.includeTrackLogo && trackInfo.logoUrl ? `
         <div style="text-align: center; margin-bottom: 5px;">
           <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 50px; max-width: 100px;">
@@ -57,6 +57,26 @@ export const exportToPdf = (
         padding-bottom: 7mm; /* Space for footer */
       }
       
+      /* Grid container for two classes per row layout */
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        width: 100%;
+      }
+      
+      /* Grid items */
+      .grid-item {
+        width: 100%;
+        break-inside: avoid;
+      }
+      
+      /* Page break styling for separate pages option */
+      .page-break-container {
+        page-break-after: always;
+        page-break-before: auto; /* Prevent blank first page issue */
+      }
+      
       /* Logo container */
       .logo-container {
         text-align: center;
@@ -88,13 +108,15 @@ export const exportToPdf = (
       /* Vertical layout for classes - each class appears in sequential order */
       .classes-container {
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
         width: 100%;
-        gap: 5px;
       }
       
+      /* Single centered class container */
       .class-container {
-        width: calc(50% - 5px);
+        width: 100%;
+        max-width: 700px; 
+        margin: 0 auto;
         break-inside: avoid;
         margin-bottom: 5px;
       }
@@ -284,18 +306,35 @@ function applyTitleStyle(titleElements: NodeListOf<Element>, titleSizeClass: str
 }
 
 /**
- * Generate HTML tables for each class lineup with vertical layout
+ * Generate HTML tables for each class lineup with grid or vertical layout based on settings
  */
 const generateLineupTables = (
   lineups: ProcessedLineup[],
   settings: ExportSettings
 ): string => {
-  let html = '<div class="classes-container">';
+  // Use grid layout for combined mode (2 classes per row)
+  const isCombined = settings.pageLayout === 'combined';
   
-  // Each class is its own container, with two classes per row
-  lineups.forEach((lineup) => {
-    html += generateClassTable(lineup, settings);
-  });
+  let html = `<div class="classes-container${isCombined ? ' grid-layout' : ''}">`;
+  
+  if (isCombined) {
+    // For combined view, use a grid layout with 2 columns
+    html += '<div class="grid-container">';
+    lineups.forEach((lineup) => {
+      html += `<div class="grid-item">${generateClassTable(lineup, settings)}</div>`;
+    });
+    html += '</div>';
+  } else {
+    // For separate pages view, use the original vertical layout with page breaks
+    lineups.forEach((lineup, index) => {
+      const isLastItem = index === lineups.length - 1;
+      const needsPageBreak = !isLastItem; // Always add page break except for last item
+      
+      html += `<div class="${needsPageBreak ? 'page-break-container' : ''}">`;
+      html += generateClassTable(lineup, settings);
+      html += '</div>';
+    });
+  }
   
   html += '</div>';
   return html;
@@ -309,27 +348,28 @@ const generateClassTable = (
   settings: ExportSettings
 ): string => {
   const tableData = formatInsideOutsideData(lineup.drivers);
+  const customFontStyle = settings.customFontSize ? `font-size: ${settings.customFontSize}px !important;` : '';
   
   return `
     <div class="class-container">
       <div class="class-header">
         <div style="background-color: #4285F4; color: white; padding: 2px 4px; margin-bottom: 3px;">
-          <h2 class="class-name-heading">${lineup.className}</h2>
+          <h2 class="class-name-heading" style="${customFontStyle}">${lineup.className}</h2>
         </div>
-        <table class="lineup-table" style="width: 100%; border-collapse: collapse;">
+        <table class="lineup-table" style="width: 100%; border-collapse: collapse; ${customFontStyle}">
           ${settings.includeHeaders ? `
             <thead>
               <tr>
-                <th style="width: 50%; border: 1px solid #ddd; text-align: center; background-color: #f2f2f2;">Inside</th>
-                <th style="width: 50%; border: 1px solid #ddd; text-align: center; background-color: #f2f2f2;">Outside</th>
+                <th style="width: 50%; border: 1px solid #ddd; text-align: center; background-color: #f2f2f2; ${customFontStyle}">Inside</th>
+                <th style="width: 50%; border: 1px solid #ddd; text-align: center; background-color: #f2f2f2; ${customFontStyle}">Outside</th>
               </tr>
             </thead>
           ` : ''}
           <tbody>
             ${tableData.map((row, rowIndex) => `
               <tr style="background-color: ${settings.alternateRowColors && rowIndex % 2 === 1 ? '#f9f9f9' : 'white'}">
-                <td style="border: 1px solid #ddd; text-align: center;">${row[0]}</td>
-                <td style="border: 1px solid #ddd; text-align: center;">${row[1]}</td>
+                <td style="border: 1px solid #ddd; text-align: center; ${customFontStyle}">${row[0]}</td>
+                <td style="border: 1px solid #ddd; text-align: center; ${customFontStyle}">${row[1]}</td>
               </tr>
             `).join('')}
           </tbody>

@@ -1,4 +1,3 @@
-
 export interface RaceClass {
   id: string;
   name: string;
@@ -37,6 +36,8 @@ export interface ExportSettings {
   includeHeaders: boolean;
   fileName: string;
   exportFormat: 'excel' | 'pdf';
+  customFontSize?: number; // Optional font size setting from preview
+  pageLayout?: 'separate' | 'combined'; // Whether to put each class on a separate page
   // Note: PDF exports now use portrait mode by default
 }
 

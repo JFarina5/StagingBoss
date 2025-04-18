@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Plus, Edit, Trash } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { RaceClass } from '@/types';
 
 const ClassManager: React.FC = () => {
@@ -17,6 +17,7 @@ const ClassManager: React.FC = () => {
   const [editingClass, setEditingClass] = useState<RaceClass | null>(null);
   const [newClassName, setNewClassName] = useState('');
   const [newClassDescription, setNewClassDescription] = useState('');
+  const [continuousAdding, setContinuousAdding] = useState(false);
 
   const handleAddClass = () => {
     if (!newClassName.trim()) return;
@@ -29,7 +30,9 @@ const ClassManager: React.FC = () => {
     
     setNewClassName('');
     setNewClassDescription('');
-    setIsAddDialogOpen(false);
+    if (!continuousAdding) {
+      setIsAddDialogOpen(false);
+    }
   };
 
   const handleEditClass = () => {
@@ -153,6 +156,14 @@ const ClassManager: React.FC = () => {
                   value={newClassDescription}
                   onChange={(e) => setNewClassDescription(e.target.value)}
                 />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="continuousAdding"
+                  checked={continuousAdding}
+                  onCheckedChange={(checked) => setContinuousAdding(checked === true)}
+                />
+                <Label htmlFor="continuousAdding">Continue Adding Classes</Label>
               </div>
             </div>
             <DialogFooter>

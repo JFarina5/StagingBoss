@@ -1,23 +1,29 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/contexts/AppContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Download, Trash, FileText } from 'lucide-react';
+import { Trash, Eye, FileText, Printer } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import ExportOptions from './ExportOptions';
+import LineupPreviewModal from './LineupPreviewModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const LineupPreview: React.FC = () => {
-  const { lineups, clearLineups } = useAppContext();
+  const { lineups, clearLineups, exportLineups } = useAppContext();
   const [selectedClassId, setSelectedClassId] = useState<string>(lineups[0]?.classId || '');
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [isAllPreviewModalOpen, setIsAllPreviewModalOpen] = useState(false);
 
   const selectedLineup = lineups.find(lineup => lineup.classId === selectedClassId);
 
-  // Format pill number for display, removing decimal part for duplicates
+  // Format pill number for display
   const formatPillNumber = (pill: number) => {
     return pill === Number.MAX_SAFE_INTEGER ? '-' : Math.floor(pill).toString();
+  };
+  
+  const handleExport = () => {
+    exportLineups();
   };
 
   return (
@@ -80,14 +86,24 @@ const LineupPreview: React.FC = () => {
                   </AlertDialogContent>
                 </AlertDialog>
                 
-                <ExportOptions 
-                  triggerButton={
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button variant="default" size="sm">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Export
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview & Print
                     </Button>
-                  }
-                />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setIsPreviewModalOpen(true)}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      Current Class
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsAllPreviewModalOpen(true)}>
+                      <Printer className="h-4 w-4 mr-2" />
+                      All Classes
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
             
@@ -136,6 +152,27 @@ const LineupPreview: React.FC = () => {
           }
         </div>
       </CardFooter>
+      
+      {/* Modal for previewing current class */}
+      {selectedLineup && (
+        <LineupPreviewModal 
+          open={isPreviewModalOpen}
+          onOpenChange={setIsPreviewModalOpen}
+          lineup={selectedLineup}
+          onExport={handleExport}
+        />
+      )}
+      
+      {/* Modal for previewing all lineups */}
+      {lineups.length > 0 && (
+        <LineupPreviewModal 
+          open={isAllPreviewModalOpen}
+          onOpenChange={setIsAllPreviewModalOpen}
+          lineup={lineups[0]} // Ensure we always pass a valid lineup, even for "all" mode
+          showAllLineups={true}
+          onExport={handleExport}
+        />
+      )}
     </Card>
   );
 };
