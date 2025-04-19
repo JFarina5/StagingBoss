@@ -366,23 +366,23 @@ const generateClassTable = (
   return `
     <div class="class-container">
       <div class="class-header">
-        <div style="background-color: #4285F4; color: white; padding: 2px 4px; margin-bottom: 3px;">
-          <h2 class="class-name-heading" style="${customFontStyle}">${lineup.className}</h2>
+        <div style="background-color: #ffffff; padding: 8px; margin-bottom: 8px; text-align: left;">
+          <h2 style="margin: 0; padding: 0; color: black !important; font-weight: bold !important; ${customFontStyle}">${lineup.className}</h2>
         </div>
         <table class="lineup-table" style="width: 100%; border-collapse: collapse; ${customFontStyle}">
           ${settings.includeHeaders ? `
             <thead>
               <tr>
-                <th style="width: 50%; border: 1px solid #ddd; text-align: center; background-color: #f2f2f2; ${customFontStyle}">Inside</th>
-                <th style="width: 50%; border: 1px solid #ddd; text-align: center; background-color: #f2f2f2; ${customFontStyle}">Outside</th>
+                <th style="width: 50%; border: 1px solid #333; text-align: center; background-color: #f2f2f2; color: black !important; padding: 5px; ${customFontStyle}">Inside</th>
+                <th style="width: 50%; border: 1px solid #333; text-align: center; background-color: #f2f2f2; color: black !important; padding: 5px; ${customFontStyle}">Outside</th>
               </tr>
             </thead>
           ` : ''}
           <tbody>
             ${tableData.map((row, rowIndex) => `
-              <tr style="background-color: ${settings.alternateRowColors && rowIndex % 2 === 1 ? '#f9f9f9' : 'white'}">
-                <td style="border: 1px solid #ddd; text-align: center; ${customFontStyle}">${row[0]}</td>
-                <td style="border: 1px solid #ddd; text-align: center; ${customFontStyle}">${row[1]}</td>
+              <tr style="background-color: ${rowIndex % 2 === 1 ? '#f0f0f0' : 'white'} !important;">
+                <td style="border: 1px solid #ddd; text-align: center; padding: 4px; ${customFontStyle}">${row[0]}</td>
+                <td style="border: 1px solid #ddd; text-align: center; padding: 4px; ${customFontStyle}">${row[1]}</td>
               </tr>
             `).join('')}
           </tbody>
