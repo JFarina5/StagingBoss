@@ -73,7 +73,7 @@ const LineupPreviewModal: React.FC<LineupPreviewModalProps> = ({
 
   useEffect(() => {
     const checkPagination = () => {
-      if (!previewRef.current) return;
+      if (!previewRef.current) return false;
       // Skip pagination warning check if user has selected 'separate pages' layout
       if (pageLayout === 'separate') return false;
       
@@ -83,6 +83,12 @@ const LineupPreviewModal: React.FC<LineupPreviewModalProps> = ({
     };
 
     const timer = setTimeout(() => {
+      // Only check pagination if we're in combined mode
+      if (pageLayout === 'separate') {
+        setShowPaginationWarning(false);
+        return;
+      }
+      
       const wouldOverflow = checkPagination();
       if (!wouldOverflow || wouldOverflow && fontSize > requestedFontSize) {
         return;
@@ -151,8 +157,42 @@ const LineupPreviewModal: React.FC<LineupPreviewModalProps> = ({
   const handlePageLayoutChange = (value: string) => {
     // Ensure we only set valid values
     if (value === 'separate' || value === 'combined') {
+      // When changing to separate pages, automatically clear any pagination warning
+      if (value === 'separate') {
+        setShowPaginationWarning(false);
+      } else if (value === 'combined' && previewRef.current) {
+        // When changing to combined, check if we need to auto-adjust the font size
+        const pageHeight = 11 * 96;
+        const contentHeight = previewRef.current.scrollHeight;
+        if (contentHeight > pageHeight) {
+          // Auto-adjust to optimal font size for one page if switching to combined view
+          findOptimalFontSize();
+        }
+      }
       setPageLayout(value as PageLayout);
     }
+  };
+
+  // Function to find the largest font size that fits content on one page
+  const findOptimalFontSize = () => {
+    if (!previewRef.current) return;
+    
+    const pageHeight = 11 * 96;
+    let optimalSize = fontSize;
+    
+    // Try decreasing font sizes until content fits
+    for (let testSize = fontSize; testSize >= 10; testSize--) {
+      previewRef.current.style.fontSize = `${testSize}px`;
+      if (previewRef.current.scrollHeight <= pageHeight) {
+        optimalSize = testSize;
+        break;
+      }
+    }
+    
+    // Apply the optimal size
+    setFontSize(optimalSize);
+    setRequestedFontSize(optimalSize);
+    previewRef.current.style.fontSize = `${optimalSize}px`;
   };
 
   // Don't render anything if modal isn't open

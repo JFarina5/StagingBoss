@@ -22,12 +22,7 @@ export const exportToPdf = (
   // Create print-friendly content with optimized vertical layout for portrait mode
   printDiv.innerHTML = `
     <div style="padding: 5px; font-family: Arial, sans-serif; ${settings.customFontSize ? `font-size: ${settings.customFontSize}px;` : ''}">
-      ${settings.includeTrackLogo && trackInfo.logoUrl ? `
-        <div style="text-align: center; margin-bottom: 5px;">
-          <img src="${trackInfo.logoUrl}" alt="${trackInfo.name} Logo" style="max-height: 50px; max-width: 100px;">
-        </div>
-      ` : ''}
-      ${generateLineupTables(lineups, settings)}
+      ${generateLineupTables(lineups, settings, trackInfo.logoUrl)}
       <div class="footer">
         Lineups produced by StagingBoss
       </div>
@@ -310,12 +305,22 @@ function applyTitleStyle(titleElements: NodeListOf<Element>, titleSizeClass: str
  */
 const generateLineupTables = (
   lineups: ProcessedLineup[],
-  settings: ExportSettings
+  settings: ExportSettings,
+  trackLogoUrl?: string
 ): string => {
   // Use grid layout for combined mode (2 classes per row)
   const isCombined = settings.pageLayout === 'combined';
   
   let html = `<div class="classes-container${isCombined ? ' grid-layout' : ''}">`;
+  
+  // Add track logo at the top, before the grid container or page breaks
+  if (trackLogoUrl && settings.includeTrackLogo) {
+    html += `
+      <div style="text-align: center; margin-bottom: 10px;">
+        <img src="${trackLogoUrl}" alt="Track Logo" style="max-height: 50px; max-width: 100px;">
+      </div>
+    `;
+  }
   
   if (isCombined) {
     // For combined view, use a grid layout with 2 columns
@@ -331,6 +336,14 @@ const generateLineupTables = (
       const needsPageBreak = !isLastItem; // Always add page break except for last item
       
       html += `<div class="${needsPageBreak ? 'page-break-container' : ''}">`;
+      // Add logo to each page in separate pages view
+      if (index > 0 && trackLogoUrl && settings.includeTrackLogo) {
+        html += `
+          <div style="text-align: center; margin-bottom: 10px;">
+            <img src="${trackLogoUrl}" alt="Track Logo" style="max-height: 50px; max-width: 100px;">
+          </div>
+        `;
+      }
       html += generateClassTable(lineup, settings);
       html += '</div>';
     });
