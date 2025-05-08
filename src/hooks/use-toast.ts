@@ -57,7 +57,8 @@ const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
-    return
+    clearTimeout(toastTimeouts.get(toastId))
+    toastTimeouts.delete(toastId)
   }
 
   const timeout = setTimeout(() => {
@@ -178,8 +179,13 @@ function useToast() {
       if (index > -1) {
         listeners.splice(index, 1)
       }
+      // Clean up any remaining timeouts when component unmounts
+      toastTimeouts.forEach((timeout, id) => {
+        clearTimeout(timeout)
+        toastTimeouts.delete(id)
+      })
     }
-  }, [state])
+  }, []) // Remove state from dependencies to prevent unnecessary re-renders
 
   return {
     ...state,

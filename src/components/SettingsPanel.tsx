@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,8 +56,23 @@ const SettingsPanel: React.FC = () => {
     
     // Read and convert file to data URL
     const reader = new FileReader();
+    
+    // Create an AbortController for cleanup
+    const controller = new AbortController();
+    
     reader.onload = (event) => {
+      if (controller.signal.aborted) return;
+      
       const logoUrl = event.target?.result as string;
+      if (!logoUrl) {
+        toast({
+          title: "Upload Failed",
+          description: "Failed to process the image",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       updateTrackInfo({
         ...settings.trackInfo,
         logoUrl
@@ -71,6 +85,8 @@ const SettingsPanel: React.FC = () => {
     };
     
     reader.onerror = () => {
+      if (controller.signal.aborted) return;
+      
       toast({
         title: "Upload Failed",
         description: "An error occurred while processing the image",
@@ -79,6 +95,12 @@ const SettingsPanel: React.FC = () => {
     };
     
     reader.readAsDataURL(file);
+    
+    // Cleanup function
+    return () => {
+      controller.abort();
+      reader.abort();
+    };
   };
   
   const handleRemoveLogo = () => {

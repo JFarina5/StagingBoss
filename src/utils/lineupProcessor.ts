@@ -11,8 +11,12 @@ export const parseRawData = (
   const drivers: Driver[] = [];
   const errors: string[] = [];
   
-  if (!rawData.trim()) {
+  if (!rawData?.trim()) {
     return { drivers, errors: ['No data provided'] };
+  }
+  
+  if (!classes?.length) {
+    return { drivers, errors: ['No classes available'] };
   }
   
   // Find the selected class
@@ -26,7 +30,7 @@ export const parseRawData = (
   
   for (let i = 0; i < lines.length; i++) {
     lineCounter++;
-    const line = lines[i].trim();
+    const line = lines[i]?.trim();
     if (!line) continue;
     
     const parts = line.split('\t');
@@ -43,43 +47,55 @@ export const parseRawData = (
     let driverName: string = '';
     let pillNumber: number | null = null;
     
-    if (parts.length >= 4) {
-      // Format: Racer No. | Last Name | First Name | Pill No.
-      carNumber = parts[0].trim();
-      driverName = `${parts[2].trim()} ${parts[1].trim()}`.trim(); // First + Last name
-      if (parts[3].trim()) {
-        const pillValue = parseInt(parts[3].trim(), 10);
-        if (!isNaN(pillValue)) {
-          pillNumber = pillValue;
-        } else {
-          errors.push(`Line ${lineCounter}: Invalid pill number "${parts[3].trim()}". Using order received.`);
+    try {
+      if (parts.length >= 4) {
+        // Format: Racer No. | Last Name | First Name | Pill No.
+        carNumber = parts[0]?.trim() || '';
+        const lastName = parts[1]?.trim() || '';
+        const firstName = parts[2]?.trim() || '';
+        driverName = `${firstName} ${lastName}`.trim();
+        
+        if (parts[3]?.trim()) {
+          const pillValue = parseInt(parts[3].trim(), 10);
+          if (!isNaN(pillValue)) {
+            pillNumber = pillValue;
+          } else {
+            errors.push(`Line ${lineCounter}: Invalid pill number "${parts[3].trim()}". Using order received.`);
+          }
         }
-      }
-    } else if (parts.length === 3) {
-      // Format: Racer No. | Driver Name | Pill No.
-      carNumber = parts[0].trim();
-      driverName = parts[1].trim();
-      if (parts[2].trim()) {
-        const pillValue = parseInt(parts[2].trim(), 10);
-        if (!isNaN(pillValue)) {
-          pillNumber = pillValue;
-        } else {
-          errors.push(`Line ${lineCounter}: Invalid pill number "${parts[2].trim()}". Using order received.`);
+      } else if (parts.length === 3) {
+        // Format: Racer No. | Driver Name | Pill No.
+        carNumber = parts[0]?.trim() || '';
+        driverName = parts[1]?.trim() || '';
+        if (parts[2]?.trim()) {
+          const pillValue = parseInt(parts[2].trim(), 10);
+          if (!isNaN(pillValue)) {
+            pillNumber = pillValue;
+          } else {
+            errors.push(`Line ${lineCounter}: Invalid pill number "${parts[2].trim()}". Using order received.`);
+          }
         }
+      } else if (parts.length === 2) {
+        // Format: Racer No. | Driver Name
+        carNumber = parts[0]?.trim() || '';
+        driverName = parts[1]?.trim() || '';
       }
-    } else if (parts.length === 2) {
-      // Format: Racer No. | Driver Name
-      carNumber = parts[0].trim();
-      driverName = parts[1].trim();
+      
+      if (!carNumber || !driverName) {
+        errors.push(`Line ${lineCounter}: Missing required fields (car number and driver name)`);
+        continue;
+      }
+      
+      drivers.push({
+        carNumber,
+        driverName,
+        pillNumber: pillNumber !== null ? pillNumber : Number.MAX_SAFE_INTEGER,
+        className: classObj.name,
+        classId: classObj.id,
+      });
+    } catch (error) {
+      errors.push(`Line ${lineCounter}: Error processing data - ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    drivers.push({
-      carNumber,
-      driverName,
-      pillNumber: pillNumber !== null ? pillNumber : Number.MAX_SAFE_INTEGER,
-      className: classObj.name,
-      classId: classObj.id,
-    });
   }
   
   return { drivers, errors };

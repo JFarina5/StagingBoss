@@ -10,6 +10,7 @@ interface AppContextType {
   rawData: string;
   settings: AppSettings;
   darkMode: boolean;
+  isLoading: boolean;
   // Actions
   addClass: (newClass: RaceClass) => void;
   updateClass: (updatedClass: RaceClass) => void;
@@ -51,16 +52,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [lineups, setLineups] = useState<ProcessedLineup[]>([]);
   const [rawData, setRawData] = useState<string>('');
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const darkMode = settings.darkMode;
 
   useEffect(() => {
-    const loadPersistedData = () => {
+    const loadPersistedData = async () => {
       try {
+        setIsLoading(true);
         const persistedTrackInfo = localStorage.getItem(STORAGE_KEYS.TRACK_INFO);
         if (persistedTrackInfo) {
-          const trackInfo = JSON.parse(persistedTrackInfo);
-          setSettings(prev => ({ ...prev, trackInfo }));
+          try {
+            const trackInfo = JSON.parse(persistedTrackInfo);
+            setSettings(prev => ({ ...prev, trackInfo }));
+          } catch (error) {
+            console.error('Error parsing track info:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to load track information',
+              variant: 'destructive'
+            });
+          }
         }
 
         const persistedDarkMode = localStorage.getItem(STORAGE_KEYS.DARK_MODE);
@@ -70,20 +82,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         const persistedClasses = localStorage.getItem(STORAGE_KEYS.CLASSES);
         if (persistedClasses) {
-          setClasses(JSON.parse(persistedClasses));
+          try {
+            const parsedClasses = JSON.parse(persistedClasses);
+            if (Array.isArray(parsedClasses)) {
+              setClasses(parsedClasses);
+            } else {
+              throw new Error('Invalid classes data format');
+            }
+          } catch (error) {
+            console.error('Error parsing classes:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to load saved classes',
+              variant: 'destructive'
+            });
+          }
         }
 
         const persistedExportSettings = localStorage.getItem(STORAGE_KEYS.EXPORT_SETTINGS);
         if (persistedExportSettings) {
-          setSettings(prev => ({ ...prev, defaultExportSettings: JSON.parse(persistedExportSettings) }));
+          try {
+            const exportSettings = JSON.parse(persistedExportSettings);
+            setSettings(prev => ({ ...prev, defaultExportSettings: exportSettings }));
+          } catch (error) {
+            console.error('Error parsing export settings:', error);
+            toast({
+              title: 'Error',
+              description: 'Failed to load export settings',
+              variant: 'destructive'
+            });
+          }
         }
       } catch (error) {
         console.error('Error loading persisted data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load saved data',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
       }
     };
 
     loadPersistedData();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (darkMode) {
@@ -293,6 +336,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     rawData,
     settings,
     darkMode,
+    isLoading,
     addClass,
     updateClass,
     removeClass,
@@ -303,7 +347,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateTrackInfo,
     clearLineups,
     exportLineups,
-  }), [classes, lineups, rawData, settings, darkMode]);
+  }), [classes, lineups, rawData, settings, darkMode, isLoading]);
+
+  if (isLoading) {
+    return <div>Loading...</div>; // You might want to replace this with a proper loading component
+  }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
