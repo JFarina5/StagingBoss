@@ -3,6 +3,7 @@ import { Driver, ProcessedLineup, RaceClass, AppSettings, TrackInfo, ExportSetti
 import { useToast } from '@/components/ui/use-toast';
 import { parseRawData, processLineups as processLineupUtil } from '@/utils/lineupProcessor';
 import { exportLineups as exportLineupsUtil } from '@/utils/exportUtils';
+import Loading from '@/components/ui/loading';
 
 interface AppContextType {
   classes: RaceClass[];
@@ -350,7 +351,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }), [classes, lineups, rawData, settings, darkMode, isLoading]);
 
   if (isLoading) {
-    return <div>Loading...</div>; // You might want to replace this with a proper loading component
+    return <Loading fullScreen text="Loading application data..." />;
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
