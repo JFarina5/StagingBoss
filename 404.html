@@ -3,21 +3,13 @@
   <head>
     <meta charset="utf-8">
     <title>StagingBoss - Redirecting</title>
-    <script type="text/javascript">
-      // Simple redirect script for GitHub Pages SPA with HashRouter
-      var segmentCount = 1; // Change to 0 if your repo is username.github.io
-      var location = window.location;
-      var repo = '/StagingBoss';
-      var l = location.pathname.replace(repo, '');
-      
-      // Redirect to the main app with hash routing
-      var redirectUrl = location.origin + repo + '/#' + l;
-      window.location.replace(redirectUrl);
+    <meta http-equiv="refresh" content="0; url=/StagingBoss/" />
+    <script>
+      // For browsers that ignore meta refresh
+      window.location.replace("/StagingBoss/");
     </script>
   </head>
   <body>
-    <h1 style="text-align: center; padding-top: 50px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-      Redirecting to StagingBoss...
-    </h1>
+    <h1>Redirecting...</h1>
   </body>
 </html>
